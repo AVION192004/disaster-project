@@ -1,0 +1,8 @@
+.App {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  background-color: #121212; /* Dark background */
+  color: #ffffff; /* Light text */
+  font-family: 'Poppins', Arial, sans-serif;
+}

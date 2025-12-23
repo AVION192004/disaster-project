@@ -1,0 +1,102 @@
+.hero {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  height: 100vh; /* Full viewport height */
+  padding: 2rem 5rem;
+  background-color: #121212; /* Match the dark background */
+}
+
+.hero-content {
+  max-width: 45%;
+  text-align: left;
+}
+
+.hero-content h1 {
+  font-family: 'Poppins', Arial, sans-serif;
+  font-size: 3rem;
+  color: #ffffff; /* White text for heading */
+  margin-bottom: 1rem;
+}
+
+.hero-content p {
+  margin: 1rem 0;
+  margin-bottom: 2rem;
+  font-size: 1.2rem;
+  color: #b3b3b3; /* Subtle gray for paragraph */
+}
+
+.hero-buttons {
+  margin-top: 1.5rem;
+}
+
+.hero-buttons .get-started {
+  background: linear-gradient(135deg, #6a1b9a, #8338ec); /* Subtle gradient */
+  color: #ffffff;
+  padding: 0.8rem 1.5rem;
+  border: none;
+  border-radius: 8px;
+  margin-right: 1rem;
+  font-weight: bold;
+  cursor: pointer;
+  box-shadow: 0 3px 8px rgba(102, 16, 242, 0.4); /* Softer shadow for depth */
+  transition: all 0.3s ease;
+}
+
+.hero-buttons .get-started:hover {
+  background: linear-gradient(135deg, #8338ec, #4a148c); /* Slightly darker gradient on hover */
+  transform: scale(1.05); /* Gentle zoom on hover */
+  box-shadow: 0 4px 12px rgba(102, 16, 242, 0.5);
+}
+
+.hero-buttons .learn-more {
+  background: transparent; /* Transparent background */
+  color: #8338ec; /* Vibrant text color */
+  padding: 0.8rem 1.5rem;
+  border: 2px solid #8338ec; /* Add a border */
+  border-radius: 8px;
+  font-weight: bold;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.hero-buttons .learn-more:hover {
+  background: #8338ec; /* Filled background on hover */
+  color: #ffffff; /* White text on hover */
+  transform: scale(1.1); /* Slight zoom on hover */
+  box-shadow: 0 4px 10px rgba(131, 56, 236, 0.5);
+}
+
+.hero-image {
+  width: 40%;
+  height: auto; /* Adjusted height for better fit */
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-color: #1f1f1f; /* Dark gray placeholder */
+  border-radius: 10px;
+}
+
+.hero-image img {
+  width: 100%; /* Make the image responsive */
+  height: auto; /* Maintain aspect ratio */
+  border-radius: 10px; /* Optional: Add rounded corners */
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.5); /* Optional: Add shadow for style */
+}
+
+.image-placeholder {
+  width: 80%;
+  height: 80%;
+  background-color: #333333; /* Darker gray */
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 10px;
+}
+
+.image-placeholder::before {
+  content: "Image Placeholder";
+  color: #b3b3b3; /* Subtle gray text */
+  font-size: 1rem;
+  text-align: center;
+}

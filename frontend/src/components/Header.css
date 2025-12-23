@@ -1,0 +1,45 @@
+.header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1rem 2rem;
+  background-color: #1f1f1f; /* Slightly lighter dark for header */
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.5);
+  font-family: 'Poppins', Arial, sans-serif;
+}
+
+.logo {
+  font-size: 1.5rem;
+  font-weight: bold;
+  color: #ffffff;
+}
+
+.nav-links {
+  display: flex;
+  gap: 1.5rem;
+}
+
+.nav-links a {
+  text-decoration: none;
+  font-size: 1rem;
+  color: #b3b3b3; /* Subtle gray */
+  transition: color 0.3s ease;
+}
+
+.nav-links a:hover {
+  color: #ffffff;
+}
+
+.sign-up {
+  background-color: #8338EC; /* Accent green */
+  color: #ffffff;
+  border: none;
+  padding: 0.5rem 1rem;
+  border-radius: 5px;
+  cursor: pointer;
+  transition: background-color 0.3s ease;
+}
+
+.sign-up:hover {
+  background-color: #9482fb; /* Slightly brighter green on hover */
+}

@@ -1,0 +1,45 @@
+.how-it-works {
+  padding: 80px 20px;
+  background: #0f0f0f;
+  color: #ffffff;
+  text-align: center;
+}
+
+.how-it-works h2 {
+  font-size: 2.2rem;
+  margin-bottom: 40px;
+}
+
+.steps {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 30px;
+  max-width: 1000px;
+  margin: auto;
+}
+
+.step {
+  background: #1c1c1c;
+  padding: 25px;
+  border-radius: 12px;
+}
+
+.step span {
+  display: inline-block;
+  width: 40px;
+  height: 40px;
+  line-height: 40px;
+  border-radius: 50%;
+  background: #8338ec;
+  margin-bottom: 10px;
+  font-weight: bold;
+}
+
+.step h4 {
+  margin: 10px 0;
+}
+
+.step p {
+  color: #bdbdbd;
+  font-size: 0.95rem;
+}

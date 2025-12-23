@@ -1,0 +1,114 @@
+/* Container for the entire page */
+.signup-container {
+    min-height: 100vh;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    background: linear-gradient(to bottom, #121212, #1f1f1f); /* Rescueplex theme */
+    font-family: "Poppins", Arial, sans-serif;
+  }
+  
+  /* Sign-up card */
+  .signup-card {
+    background: #ffffff;
+    width: 400px;
+    border-radius: 15px;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+    padding: 2rem;
+    text-align: center;
+    position: relative;
+  }
+  
+  /* Back button */
+  .back-button {
+    position: absolute;
+    top: 1rem;
+    left: 1rem;
+    background: transparent;
+    border: none;
+    color: #8338EC;
+    font-size: 1rem;
+    cursor: pointer;
+  }
+  
+  /* Text-based logo */
+  .signup-text-logo {
+    font-size: 2rem;
+    font-weight: bold;
+    color: #8338EC; /* Green color for Rescueplex theme */
+    margin-bottom: 1rem;
+  }
+  
+  /* Title and description */
+  .signup-card h2 {
+    font-size: 1.8rem;
+    font-weight: bold;
+    color: #121212;
+    margin-bottom: 0.5rem;
+  }
+  
+  .signup-card p {
+    font-size: 1rem;
+    color: #666666;
+    margin-bottom: 2rem;
+  }
+  
+  /* Form styles */
+  .signup-form {
+    width: 100%;
+  }
+  
+  .form-group {
+    margin-bottom: 1.5rem;
+    text-align: left;
+  }
+  
+  .form-group label {
+    display: block;
+    font-size: 0.9rem;
+    color: #121212;
+    margin-bottom: 0.5rem;
+  }
+  
+  .form-group input {
+    width: 100%;
+    padding: 0.8rem;
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    font-size: 1rem;
+    color: #121212;
+  }
+  
+  .signup-button {
+    background: #8338EC;
+    color: #ffffff;
+    width: 100%;
+    padding: 0.8rem;
+    border: none;
+    border-radius: 8px;
+    font-size: 1rem;
+    cursor: pointer;
+    transition: background 0.3s ease;
+  }
+  
+  .signup-button:hover {
+    background: #9482fb;
+  }
+  
+  /* Sign-in link */
+  .signin-text {
+    margin-top: 1rem;
+    font-size: 0.9rem;
+    color: #666666;
+  }
+  
+  .signin-text a {
+    color: #8338EC;
+    text-decoration: none;
+    font-weight: bold;
+  }
+  
+  .signin-text a:hover {
+    text-decoration: underline;
+  }
+  
