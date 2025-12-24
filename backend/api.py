@@ -90,7 +90,6 @@ def analyze_damage():
 
         image_np = np.frombuffer(file.read(), np.uint8)
         image = cv2.imdecode(image_np, cv2.IMREAD_COLOR)
-
         image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
         image_resized = cv2.resize(image, (480, 360))
         image_normalized = image_resized / 255.0
