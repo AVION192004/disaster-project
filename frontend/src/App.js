@@ -10,6 +10,7 @@ import SignUp from "./components/SignUp";
 import SignIn from "./components/SignIn";
 import Dashboard from "./components/Dashboard";
 import ProtectedRoute from "./components/ProtectedRoute";
+import ReportDisaster from "./components/ReportDisaster";
 
 import OfficerRegister from "./pages/OfficerRegister";
 import OfficerLogin from "./pages/OfficerLogin";
@@ -30,6 +31,7 @@ function App() {
               <>
                 <HeroSection />
                 <HowItWorks />
+                <ReportDisaster />
                 <DamageAssessment />
               </>
             }

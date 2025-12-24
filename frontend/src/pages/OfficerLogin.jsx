@@ -1,5 +1,3 @@
-// Save this as: frontend/src/pages/OfficerLogin.jsx
-
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import './Auth.css';
@@ -37,16 +35,14 @@ const OfficerLogin = () => {
       const data = await response.json();
 
       if (response.ok) {
-        // Store token and officer data
         localStorage.setItem('officer_token', data.token);
         localStorage.setItem('officer_data', JSON.stringify(data.officer));
-        
-        // Redirect to dashboard
         navigate('/officer/dashboard');
       } else {
         setError(data.error || 'Login failed');
       }
     } catch (err) {
+      console.error('Login error:', err);
       setError('Network error. Please try again.');
     } finally {
       setLoading(false);
@@ -59,7 +55,7 @@ const OfficerLogin = () => {
         <button className="back-btn" onClick={() => navigate('/')}>
           ← Back
         </button>
-        
+
         <h1 className="brand-name">Rescueplex</h1>
         <h2 className="auth-title">Officer Login</h2>
         <p className="auth-subtitle">Welcome back! 👋 Login to get started!</p>
@@ -110,7 +106,9 @@ const OfficerLogin = () => {
         </form>
 
         <div className="demo-credentials">
-          <p><strong>Demo Login:</strong></p>
+          <p>
+            <strong>Demo Login:</strong>
+          </p>
           <p>Email: officer1@rescue.com</p>
           <p>Password: rescue123</p>
         </div>

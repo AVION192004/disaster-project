@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Upload, AlertCircle, CheckCircle, Loader } from 'lucide-react';
+import { Upload, CheckCircle, Loader } from 'lucide-react';
 import './DamageAssessment.css';
 
 export default function DamageAssessment() {
