@@ -1,0 +1,234 @@
+
+
+.auth-container {
+  min-height: 100vh;
+  background: linear-gradient(135deg, #1e1b2e 0%, #2d2640 100%);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 20px;
+}
+
+.auth-card {
+  background: rgba(255, 255, 255, 0.05);
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 20px;
+  padding: 40px;
+  max-width: 500px;
+  width: 100%;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+}
+
+.back-btn {
+  background: transparent;
+  border: none;
+  color: rgba(255, 255, 255, 0.6);
+  font-size: 1rem;
+  cursor: pointer;
+  padding: 8px 0;
+  margin-bottom: 20px;
+  transition: color 0.3s;
+}
+
+.back-btn:hover {
+  color: #a855f7;
+}
+
+.brand-name {
+  text-align: center;
+  color: #a855f7;
+  font-size: 2rem;
+  margin: 0 0 10px 0;
+  font-weight: bold;
+}
+
+.auth-title {
+  text-align: center;
+  color: white;
+  font-size: 1.8rem;
+  margin: 10px 0;
+}
+
+.auth-subtitle {
+  text-align: center;
+  color: rgba(255, 255, 255, 0.6);
+  margin: 10px 0 30px 0;
+}
+
+.error-message {
+  background: rgba(220, 38, 38, 0.2);
+  border: 1px solid rgba(220, 38, 38, 0.4);
+  color: #fca5a5;
+  padding: 12px;
+  border-radius: 8px;
+  margin-bottom: 20px;
+  text-align: center;
+}
+
+.auth-form {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.form-group {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.form-group label {
+  color: rgba(255, 255, 255, 0.8);
+  font-size: 0.95rem;
+  font-weight: 500;
+}
+
+.form-group input,
+.form-group textarea,
+.form-group select {
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 10px;
+  padding: 12px 16px;
+  color: white;
+  font-size: 1rem;
+  transition: all 0.3s;
+}
+
+.form-group input:focus,
+.form-group textarea:focus,
+.form-group select:focus {
+  outline: none;
+  border-color: #a855f7;
+  background: rgba(255, 255, 255, 0.08);
+}
+
+.form-group input::placeholder,
+.form-group textarea::placeholder {
+  color: rgba(255, 255, 255, 0.4);
+}
+
+.form-group textarea {
+  resize: vertical;
+  font-family: inherit;
+}
+
+.location-group {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 15px;
+}
+
+.location-btn {
+  background: rgba(168, 85, 247, 0.2);
+  border: 1px solid rgba(168, 85, 247, 0.3);
+  color: #c4b5fd;
+  padding: 12px;
+  border-radius: 10px;
+  cursor: pointer;
+  font-size: 0.95rem;
+  transition: all 0.3s;
+  margin-bottom: 10px;
+}
+
+.location-btn:hover {
+  background: rgba(168, 85, 247, 0.3);
+  transform: translateY(-2px);
+}
+
+.forgot-password {
+  text-align: right;
+  margin-top: -10px;
+}
+
+.forgot-password span {
+  color: #a855f7;
+  font-size: 0.9rem;
+  cursor: pointer;
+  transition: color 0.3s;
+}
+
+.forgot-password span:hover {
+  color: #8b5cf6;
+  text-decoration: underline;
+}
+
+.submit-btn {
+  background: linear-gradient(135deg, #a855f7, #8b5cf6);
+  border: none;
+  color: white;
+  padding: 14px;
+  border-radius: 10px;
+  font-size: 1.05rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s;
+  margin-top: 10px;
+}
+
+.submit-btn:hover:not(:disabled) {
+  transform: translateY(-2px);
+  box-shadow: 0 10px 30px rgba(168, 85, 247, 0.4);
+}
+
+.submit-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.auth-footer {
+  text-align: center;
+  color: rgba(255, 255, 255, 0.6);
+  margin-top: 20px;
+}
+
+.auth-footer .link {
+  color: #a855f7;
+  cursor: pointer;
+  font-weight: 500;
+  transition: color 0.3s;
+}
+
+.auth-footer .link:hover {
+  color: #8b5cf6;
+  text-decoration: underline;
+}
+
+.demo-credentials {
+  background: rgba(16, 185, 129, 0.1);
+  border: 1px solid rgba(16, 185, 129, 0.3);
+  border-radius: 8px;
+  padding: 15px;
+  margin-top: 20px;
+  text-align: center;
+}
+
+.demo-credentials p {
+  color: #6ee7b7;
+  margin: 5px 0;
+  font-size: 0.9rem;
+}
+
+.demo-credentials strong {
+  color: #10b981;
+}
+
+/* Responsive */
+@media (max-width: 600px) {
+  .auth-card {
+    padding: 30px 20px;
+  }
+
+  .brand-name {
+    font-size: 1.6rem;
+  }
+
+  .auth-title {
+    font-size: 1.4rem;
+  }
+
+  .location-group {
+    grid-template-columns: 1fr;
+  }
+}

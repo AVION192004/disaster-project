@@ -37,7 +37,7 @@ function App() {
           <Route path="/features" element={<Features />} />
           <Route path="/signup" element={<SignUp />} />
           <Route
-            path="/signin"
+            path="/signIn"
             element={<SignIn onSignIn={() => setIsAuthenticated(true)} />}
           />
           <Route
