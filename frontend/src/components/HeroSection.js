@@ -16,7 +16,8 @@ function HeroSection() {
           our platform to ensure timely resource allocation.
         </p>
         <div className="hero-buttons">
-          <button className="get-started" onClick={() => navigate('/signin')}>
+          <button className="get-started" onClick={() => navigate('/officer/login')}
+>
             Get Started
           </button>
           <button className="learn-more" onClick={() => navigate('/features')}>

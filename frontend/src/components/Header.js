@@ -11,7 +11,8 @@ function Header() {
         <Link to="/features" className="nav-link">Features</Link> {/* Features route */}
         <Link to="/dashboard" className="nav-link">Dashboard</Link> {/* Placeholder for Dashboard */}
       </nav>
-      <Link to="/signup">
+      <Link to="/officer/register">
+
         <button className="sign-up">Sign Up</button> {/* Sign Up button navigates to /signup */}
       </Link>
     </header>

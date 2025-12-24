@@ -1,52 +1,60 @@
-import React, { useState } from "react";
-import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
+import './SignIn.css';
 
-import Header from "./components/Header";
-import HeroSection from "./components/HeroSection";
-import HowItWorks from "./components/HowItWorks";
-import DamageAssessment from "./components/DamageAssessment";
-import Features from "./components/Features";
-import SignUp from "./components/SignUp";
-import SignIn from "./components/SignIn";
-import Dashboard from "./components/Dashboard";
-import ProtectedRoute from "./components/ProtectedRoute";
+function SignIn({ onSignIn }) {
+  const navigate = useNavigate();
 
-function App() {
-  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const handleSignIn = (e) => {
+    e.preventDefault(); // Prevent page reload
+    onSignIn(); // Call the onSignIn function to mark the user as authenticated
+    navigate("/dashboard"); // Redirect to Dashboard after successful login
+  };
 
   return (
-    <Router>
-      <div className="App">
-        <Header />
-        <Routes>
-          <Route
-            path="/"
-            element={
-              <>
-                <HeroSection />
-                <HowItWorks />
-                <DamageAssessment />
-              </>
-            }
-          />
-          <Route path="/features" element={<Features />} />
-          <Route path="/signup" element={<SignUp />} />
-          <Route
-            path="/signin"
-            element={<SignIn onSignIn={() => setIsAuthenticated(true)} />}
-          />
-          <Route
-            path="/dashboard"
-            element={
-              <ProtectedRoute isAuthenticated={isAuthenticated}>
-                <Dashboard />
-              </ProtectedRoute>
-            }
-          />
-        </Routes>
+    <div className="signin-container">
+      <div className="signin-card">
+        <button className="back-button" onClick={() => window.history.back()}>
+          ← Back
+        </button>
+        <div className="signin-content">
+          <div className="signin-text-logo">Rescueplex</div> {/* Text-based logo */}
+          <h2>Login</h2>
+          <p>
+            Welcome back! <span role="img" aria-label="wave">👋</span> Login to get started!
+          </p>
+          <form className="signin-form" onSubmit={handleSignIn}>
+            <div className="form-group">
+              <label htmlFor="email">Email*</label>
+              <input
+                type="email"
+                id="email"
+                placeholder="Enter your email"
+                required
+              />
+            </div>
+            <div className="form-group">
+              <label htmlFor="password">Password*</label>
+              <input
+                type="password"
+                id="password"
+                placeholder="Min. 8 characters"
+                required
+              />
+              <div className="forgot-password">
+                <a href="/forgot-password">Forgot Password?</a>
+              </div>
+            </div>
+            <button type="submit" className="signin-button">
+              Login
+            </button>
+          </form>
+          <p className="signup-text">
+            Not registered yet? <a href="/signup">Create an Account</a>
+          </p>
+        </div>
       </div>
-    </Router>
+    </div>
   );
 }
 
-export default App;
+export default SignIn;

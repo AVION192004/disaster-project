@@ -1,6 +1,6 @@
 import React from "react";
 import { useNavigate } from "react-router-dom";
-import "./SignIn.css";
+import "./Signin.css";
 
 function SignIn({ onSignIn }) {
   const navigate = useNavigate();
@@ -8,7 +8,7 @@ function SignIn({ onSignIn }) {
   const handleSignIn = (e) => {
     e.preventDefault(); // Prevent page reload
     onSignIn(); // Call the onSignIn function to mark the user as authenticated
-    navigate("/dashboard"); // Redirect to Dashboard after successful login
+navigate("/officer/dashboard");
   };
 
   return (

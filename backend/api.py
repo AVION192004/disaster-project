@@ -1,145 +1,86 @@
 from flask import Flask, request, jsonify
 from flask_cors import CORS
 import numpy as np
-import cv2
 import tensorflow as tf
-import sys
 import os
+import sys
 from tensorflow.keras.models import load_model
 from joblib import load
 
-# ✅ Fix Import Path Issue
-sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
+# --------------------------------------------------
+# 🔧 PATH FIX
+# --------------------------------------------------
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+sys.path.append(os.path.abspath(os.path.join(BASE_DIR, "..")))
 
+# --------------------------------------------------
+# 🔧 DATABASE IMPORTS
+# --------------------------------------------------
 from database.connect_db import fetch_resource_data, update_resources, log_allocation
-from custom_layer import SkipConnLayer, AttentionLayer, MyMeanIOU  # ✅ Import custom layers
 
-# Initialize Flask app
+# --------------------------------------------------
+# 🔧 FLASK APP
+# --------------------------------------------------
 app = Flask(__name__)
-CORS(app)  # Enable CORS for frontend communication
+CORS(app)
 
-# ✅ Register Custom Objects for Model Loading
-custom_objects = {
-    "SkipConnLayer": SkipConnLayer,
-    "AttentionLayer": AttentionLayer,
-    "MyMeanIOU": MyMeanIOU
-}
-
-from tensorflow.keras.losses import MeanSquaredError
+# --------------------------------------------------
+# 🔧 CUSTOM LOSS (USED BY DQN MODEL)
+# --------------------------------------------------
 from tensorflow.keras.saving import register_keras_serializable
 
 @register_keras_serializable()
 def mse(y_true, y_pred):
     return tf.keras.losses.mean_squared_error(y_true, y_pred)
 
-# ✅ Load trained models and scalers
+# --------------------------------------------------
+# 🔧 LOAD MODEL & SCALERS (SAFE)
+# --------------------------------------------------
 try:
-    print("🔍 Loading trained models and scalers...")
+    print("🔍 Loading DQN model and scalers...")
 
-    # Load DQN model (for resource allocation)
-    model = load_model("dqn_model.h5", custom_objects={"mse": mse})
-    scaler_X = load("scaler_X.pkl")
-    scaler_Y = load("scaler_Y.pkl")
+    model = load_model(
+        os.path.join(BASE_DIR, "dqn_model.h5"),
+        custom_objects={"mse": mse},
+        compile=False
+    )
 
-    # Load Segmentation Model (for damage assessment)
-    with tf.keras.utils.custom_object_scope(custom_objects):
-        segmentation_model = load_model("model.h5", compile=False)
+    scaler_X = load(os.path.join(BASE_DIR, "scaler_X.pkl"))
+    scaler_Y = load(os.path.join(BASE_DIR, "scaler_Y.pkl"))
 
-    print("✅ Models and scalers loaded successfully!")
+    print("✅ DQN model and scalers loaded successfully!")
+
 except Exception as e:
-    print(f"❌ Error loading models or scalers: {e}")
+    print(f"❌ Failed to load model or scalers: {e}")
     exit(1)
 
-# ------------------------------
-# 🔹 SEGMENTATION & DAMAGE COUNT
-# ------------------------------
+# --------------------------------------------------
+# 🔸 DAMAGE ANALYSIS (DISABLED SAFELY)
+# --------------------------------------------------
 @app.route("/analyze-damage", methods=["POST"])
 def analyze_damage():
-    try:
-        if "image" not in request.files:
-            return jsonify({"error": "No image file provided."}), 400
+    return jsonify({
+        "message": "Segmentation model is disabled (model file not available)."
+    })
 
-        file = request.files["image"]
-        image_np = np.frombuffer(file.read(), np.uint8)
-        image = cv2.imdecode(image_np, cv2.IMREAD_COLOR)
-
-        # ---------------------------------------------------------
-        # 🚀 ACCURACY BOOST 1: COLOR CORRECTION
-        # Convert BGR (OpenCV default) to RGB (AI Model default).
-        # Without this, the model confuses colors (e.g., Fire vs Water).
-        # ---------------------------------------------------------
-        image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
-
-        # ---------------------------------------------------------
-        # 🚀 ACCURACY BOOST 2: EXACT SIZING
-        # Your model input is (360, 480, 3) -> (Height, Width, Ch).
-        # cv2.resize expects (Width, Height). So (480, 360) is CORRECT.
-        # ---------------------------------------------------------
-        image_resized = cv2.resize(image, (480, 360))
-        
-        image_normalized = image_resized / 255.0
-        image_input = np.expand_dims(image_normalized, axis=0)
-
-        segmentation_output = segmentation_model.predict(image_input)[0]
-        predicted_mask = segmentation_output.argmax(axis=-1).astype(np.uint8)
-
-        print("🧪 Unique classes in predicted mask:", np.unique(predicted_mask))
-
-        building_classes = {
-            "building_no_damage": 3,
-            "building_minor_damage": 4,
-            "building_major_damage": 5,
-            "building_total_destruction": 6
-        }
-
-        # ---------------------------------------------------------
-        # 🚀 ACCURACY BOOST 3: SMART NOISE CLEANING
-        # ---------------------------------------------------------
-        def count_buildings(mask, class_id, min_size=2000):
-            # Create a mask for just this specific damage class
-            binary_mask = (mask == class_id).astype(np.uint8)
-            
-            # Use morphological operations to remove "salt and pepper" noise
-            kernel = np.ones((5, 5), np.uint8)
-            binary_mask = cv2.morphologyEx(binary_mask, cv2.MORPH_OPEN, kernel) # Removes small noise
-            binary_mask = cv2.morphologyEx(binary_mask, cv2.MORPH_CLOSE, kernel) # Closes small holes inside buildings
-            
-            # Find connected components (distinct buildings)
-            num_labels, labels = cv2.connectedComponents(binary_mask)
-            
-            count = 0
-            for i in range(1, num_labels):
-                component = (labels == i).astype(np.uint8)
-                area = cv2.countNonZero(component)
-                
-                # Only count if the area is large enough to be a real building
-                if area >= min_size:
-                    count += 1
-            return count
-
-        results = {
-            label: int(count_buildings(predicted_mask, class_id))
-            for label, class_id in building_classes.items()
-        }
-
-        return jsonify(results)
-
-    except Exception as e:
-        print(f"❌ Error during damage analysis: {e}")
-        return jsonify({"error": str(e)}), 500
-
-# ------------------------------
-# 🔸 RESOURCE ALLOCATION SECTION
-# ------------------------------
+# --------------------------------------------------
+# 🔸 RESOURCE ALLOCATION API
+# --------------------------------------------------
 @app.route("/allocate-resources", methods=["POST"])
 def allocate_resources():
     try:
         data = request.json
-        print(f"📥 Received Input: {data}")
+        print(f"📥 Input received: {data}")
 
-        required_keys = ["building_no_damage", "building_minor_damage", "building_major_damage", "building_total_destruction"]
-        if not all(key in data for key in required_keys):
-            return jsonify({"error": "Invalid input format. Missing required fields."}), 400
+        required_keys = [
+            "building_no_damage",
+            "building_minor_damage",
+            "building_major_damage",
+            "building_total_destruction"
+        ]
+
+        if not all(k in data for k in required_keys):
+            return jsonify({"error": "Missing required fields"}), 400
 
         num_minor = int(data["building_minor_damage"])
         num_major = int(data["building_major_damage"])
@@ -147,53 +88,45 @@ def allocate_resources():
 
         damage_input = np.array([[0, num_minor, num_major, num_total]])
         damage_scaled = scaler_X.transform(damage_input)
+
         predicted_scaled = model.predict(damage_scaled)
         predicted_allocations = scaler_Y.inverse_transform(predicted_scaled)[0]
-        predicted_allocations = np.maximum(predicted_allocations, 0).astype(int).tolist()
+        predicted_allocations = np.maximum(predicted_allocations, 0).astype(int)
 
         resource_data = fetch_resource_data()
         if resource_data is None or resource_data.empty:
-            return jsonify({"error": "Resource data unavailable in the database."}), 500
+            return jsonify({"error": "No resource data in DB"}), 500
 
         resource_names = resource_data["resource_name"].tolist()
 
-        total_damaged_buildings = num_minor + num_major + num_total
-        minor_allocations, major_allocations, total_allocations = [], [], []
+        total_damaged = num_minor + num_major + num_total
+        results = []
 
-        if total_damaged_buildings > 0:
-            for allocated_quantity in predicted_allocations:
-                minor_share = (num_minor / total_damaged_buildings) * allocated_quantity if num_minor > 0 else 0
-                major_share = (num_major / total_damaged_buildings) * allocated_quantity if num_major > 0 else 0
-                total_share = allocated_quantity - (int(minor_share) + int(major_share))
-
-                minor_allocations.append(int(minor_share))
-                major_allocations.append(int(major_share))
-                total_allocations.append(int(total_share))
-
-        allocation_results = {
-            "minor_damage": [{"resource_name": resource_names[i], "allocated_quantity": minor_allocations[i]} for i in range(len(resource_names)) if minor_allocations[i] > 0],
-            "major_damage": [{"resource_name": resource_names[i], "allocated_quantity": major_allocations[i]} for i in range(len(resource_names)) if major_allocations[i] > 0],
-            "total_destruction": [{"resource_name": resource_names[i], "allocated_quantity": total_allocations[i]} for i in range(len(resource_names)) if total_allocations[i] > 0]
-        }
-
-        for i, resource_name in enumerate(resource_names):
-            allocated_quantity = minor_allocations[i] + major_allocations[i] + total_allocations[i]
-            if allocated_quantity > 0:
-                update_resources(resource_name, int(allocated_quantity))
-                log_allocation(1, i + 1, int(allocated_quantity))
+        for i, qty in enumerate(predicted_allocations):
+            if qty > 0:
+                update_resources(resource_names[i], int(qty))
+                log_allocation(1, i + 1, int(qty))
+                results.append({
+                    "resource_name": resource_names[i],
+                    "allocated_quantity": int(qty)
+                })
 
         updated_resources = fetch_resource_data().to_dict(orient="records")
 
-        print("✅ Resource Allocation Successful!")
+        print("✅ Resource allocation successful")
+
         return jsonify({
-            "allocation_results": allocation_results,
+            "allocations": results,
             "updated_resources": updated_resources
         })
 
     except Exception as e:
-        print(f"❌ Error during resource allocation: {e}")
+        print(f"❌ Allocation error: {e}")
         return jsonify({"error": str(e)}), 500
 
+# --------------------------------------------------
+# 🚀 START SERVER
+# --------------------------------------------------
 if __name__ == "__main__":
     print("🚀 API Server Running on http://127.0.0.1:5000/")
     app.run(host="0.0.0.0", port=5000, debug=True)
