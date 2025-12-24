@@ -4,7 +4,7 @@ import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
 import Header from "./components/Header";
 import HeroSection from "./components/HeroSection";
 import HowItWorks from "./components/HowItWorks";
-import DamageAssessment from "./components/DamageAssessment";
+import DamageAssessment from './components/DamageAssessment';
 import Features from "./components/Features";
 import SignUp from "./components/SignUp";
 import SignIn from "./components/SignIn";
@@ -34,6 +34,7 @@ function App() {
               </>
             }
           />
+          <Route path="/damage-assessment" element={<DamageAssessment />} />
           <Route path="/features" element={<Features />} />
           <Route path="/signup" element={<SignUp />} />
           <Route
