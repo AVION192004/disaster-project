@@ -2,16 +2,48 @@
 # Frontend (Node / React)
 # =========================
 frontend/node_modules/
-frontend/node_modules/.cache/
+frontend/build/
+frontend/dist/
+frontend/.cache/
 npm-debug.log*
+yarn-debug.log*
 yarn-error.log*
+.pnp.*
+.yarn/
 
 # =========================
 # Backend (Python)
 # =========================
 backend/env/
+backend/venv/
+backend/ENV/
+backend/.venv/
 backend/__pycache__/
+backend/**/__pycache__/
 *.pyc
+*.pyo
+*.pyd
+.Python
+backend/pip-log.txt
+backend/pip-delete-this-directory.txt
+backend/.pytest_cache/
+backend/.coverage
+backend/htmlcov/
+backend/*.egg-info/
+backend/dist/
+backend/build/
+backend/*.egg
+
+# Python virtual environments (anywhere in project)
+env/
+venv/
+ENV/
+.venv/
+**/site-packages/
+**/Lib/
+**/Scripts/
+**/Include/
+**/pyvenv.cfg
 
 # =========================
 # ML large files (use Git LFS)
@@ -19,12 +51,20 @@ backend/__pycache__/
 backend/*.h5
 backend/*.pkl
 backend/*.npy
+backend/*.joblib
+backend/*.model
+backend/models/
+backend/checkpoints/
+*.weights
+*.pb
 
 # =========================
 # Environment files
 # =========================
 .env
 .env.*
+!.env.example
+*.local
 
 # =========================
 # OS / Editor junk
@@ -32,4 +72,27 @@ backend/*.npy
 .DS_Store
 Thumbs.db
 .vscode/
+.idea/
+*.swp
+*.swo
+*~
 
+# =========================
+# Logs
+# =========================
+*.log
+logs/
+backend/logs/
+
+# =========================
+# Database
+# =========================
+*.db
+*.sqlite
+*.sqlite3
+
+# =========================
+# Jupyter Notebooks
+# =========================
+.ipynb_checkpoints/
+*.ipynb_checkpoints
