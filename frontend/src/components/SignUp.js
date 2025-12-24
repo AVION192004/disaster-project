@@ -1,43 +1,51 @@
 import React from "react";
-import "./SignUp.css";
+import { useNavigate } from "react-router-dom";
+import "./SignIn.css";
 
-function SignUp() {
+function SignIn({ onSignIn }) {
+  const navigate = useNavigate();
+
+  const handleSignIn = (e) => {
+    e.preventDefault();
+    onSignIn();
+    navigate("/officer/dashboard");
+  };
+
   return (
-    <div className="signup-container">
-      <div className="signup-card">
+    <div className="signin-container">
+      <div className="signin-card">
         <button className="back-button" onClick={() => window.history.back()}>
           ← Back
         </button>
-        <div className="signup-content">
-          <div className="signup-text-logo">Rescueplex</div> {/* Text-based logo */}
-          <h2>Create an Account</h2>
+
+        <div className="signin-content">
+          <div className="signin-text-logo">Rescueplex</div>
+          <h2>Login</h2>
           <p>
-            Join Rescueplex and streamline your disaster recovery with advanced
-            tools and features.
+            Welcome back! <span role="img" aria-label="wave">👋</span> Login to get started!
           </p>
-          <form className="signup-form">
-            <div className="form-group">
-              <label htmlFor="name">Name*</label>
-              <input type="text" id="name" placeholder="Enter your name" />
-            </div>
+
+          <form className="signin-form" onSubmit={handleSignIn}>
             <div className="form-group">
               <label htmlFor="email">Email*</label>
-              <input type="email" id="email" placeholder="Enter your email" />
+              <input type="email" id="email" required />
             </div>
+
             <div className="form-group">
               <label htmlFor="password">Password*</label>
-              <input
-                type="password"
-                id="password"
-                placeholder="Enter your password"
-              />
+              <input type="password" id="password" required />
+              <div className="forgot-password">
+                <a href="/forgot-password">Forgot Password?</a>
+              </div>
             </div>
-            <button type="submit" className="signup-button">
-              Register
+
+            <button type="submit" className="signin-button">
+              Login
             </button>
           </form>
-          <p className="signin-text">
-            Already have an account? <a href="/signin">Sign in</a>
+
+          <p className="signup-text">
+            Not registered yet? <a href="/signup">Create an Account</a>
           </p>
         </div>
       </div>
@@ -45,4 +53,4 @@ function SignUp() {
   );
 }
 
-export default SignUp;
+export default SignIn;
