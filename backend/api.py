@@ -5,6 +5,7 @@ import cv2
 import tensorflow as tf
 import sys
 import os
+import base64
 from tensorflow.keras.models import load_model
 from joblib import load
 
@@ -53,6 +54,23 @@ except Exception as e:
 # ------------------------------
 # 🔹 SEGMENTATION & DAMAGE COUNT
 # ------------------------------
+def create_overlay(original, mask):
+    color_map = {
+        3: (0, 255, 0),     # No Damage
+        4: (255, 255, 0),   # Minor Damage
+        5: (255, 165, 0),   # Major Damage
+        6: (255, 0, 0)      # Complete Destruction
+    }
+
+    overlay = original.copy()
+
+    for class_id, color in color_map.items():
+        binary_mask = (mask == class_id).astype(np.uint8) * 255
+        binary_mask = cv2.medianBlur(binary_mask, 5)
+        overlay[binary_mask > 0] = color
+
+    blended = cv2.addWeighted(original, 0.6, overlay, 0.4, 0)
+    return blended
 @app.route("/analyze-damage", methods=["POST"])
 def analyze_damage():
     try:
@@ -60,60 +78,49 @@ def analyze_damage():
             return jsonify({"error": "No image file provided."}), 400
 
         file = request.files["image"]
+
+        # ✅ STEP 1: CONTEXT INPUT
+        disaster_type = request.form.get("disaster_type")
+        location = request.form.get("location")
+        timestamp = request.form.get("timestamp")
+
+        print("📍 Disaster Type:", disaster_type)
+        print("📍 Location:", location)
+        print("📍 Timestamp:", timestamp)
+
         image_np = np.frombuffer(file.read(), np.uint8)
         image = cv2.imdecode(image_np, cv2.IMREAD_COLOR)
 
-        # ---------------------------------------------------------
-        # 🚀 ACCURACY BOOST 1: COLOR CORRECTION
-        # Convert BGR (OpenCV default) to RGB (AI Model default).
-        # Without this, the model confuses colors (e.g., Fire vs Water).
-        # ---------------------------------------------------------
         image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
-
-        # ---------------------------------------------------------
-        # 🚀 ACCURACY BOOST 2: EXACT SIZING
-        # Your model input is (360, 480, 3) -> (Height, Width, Ch).
-        # cv2.resize expects (Width, Height). So (480, 360) is CORRECT.
-        # ---------------------------------------------------------
         image_resized = cv2.resize(image, (480, 360))
-        
         image_normalized = image_resized / 255.0
         image_input = np.expand_dims(image_normalized, axis=0)
 
         segmentation_output = segmentation_model.predict(image_input)[0]
         predicted_mask = segmentation_output.argmax(axis=-1).astype(np.uint8)
-
-        print("🧪 Unique classes in predicted mask:", np.unique(predicted_mask))
+        overlay_image = create_overlay(image_resized, predicted_mask)
+        overlay_bgr = cv2.cvtColor(overlay_image, cv2.COLOR_RGB2BGR)
+        _, buffer = cv2.imencode(".png", overlay_bgr)
+        overlay_base64 = base64.b64encode(buffer).decode("utf-8")
 
         building_classes = {
             "building_no_damage": 3,
             "building_minor_damage": 4,
             "building_major_damage": 5,
-            "building_total_destruction": 6
+            "building_complete_destruction": 6
         }
 
-        # ---------------------------------------------------------
-        # 🚀 ACCURACY BOOST 3: SMART NOISE CLEANING
-        # ---------------------------------------------------------
         def count_buildings(mask, class_id, min_size=2000):
-            # Create a mask for just this specific damage class
             binary_mask = (mask == class_id).astype(np.uint8)
-            
-            # Use morphological operations to remove "salt and pepper" noise
             kernel = np.ones((5, 5), np.uint8)
-            binary_mask = cv2.morphologyEx(binary_mask, cv2.MORPH_OPEN, kernel) # Removes small noise
-            binary_mask = cv2.morphologyEx(binary_mask, cv2.MORPH_CLOSE, kernel) # Closes small holes inside buildings
-            
-            # Find connected components (distinct buildings)
+            binary_mask = cv2.morphologyEx(binary_mask, cv2.MORPH_OPEN, kernel)
+            binary_mask = cv2.morphologyEx(binary_mask, cv2.MORPH_CLOSE, kernel)
+
             num_labels, labels = cv2.connectedComponents(binary_mask)
-            
             count = 0
             for i in range(1, num_labels):
                 component = (labels == i).astype(np.uint8)
-                area = cv2.countNonZero(component)
-                
-                # Only count if the area is large enough to be a real building
-                if area >= min_size:
+                if cv2.countNonZero(component) >= min_size:
                     count += 1
             return count
 
@@ -122,12 +129,17 @@ def analyze_damage():
             for label, class_id in building_classes.items()
         }
 
-        return jsonify(results)
+        return jsonify({
+            **results,
+            "overlay_image": overlay_base64,
+            "disaster_type": disaster_type,
+            "location": location,
+            "timestamp": timestamp
+        })
 
     except Exception as e:
         print(f"❌ Error during damage analysis: {e}")
         return jsonify({"error": str(e)}), 500
-
 # ------------------------------
 # 🔸 RESOURCE ALLOCATION SECTION
 # ------------------------------
@@ -187,7 +199,14 @@ def allocate_resources():
         print("✅ Resource Allocation Successful!")
         return jsonify({
             "allocation_results": allocation_results,
-            "updated_resources": updated_resources
+            "updated_resources": updated_resources,
+             "building_no_damage": no_damage,
+            "building_minor_damage": minor_damage,
+             "building_major_damage": major_damage,
+               "building_complete_destruction": complete_destruction,
+             "disaster_type": disaster_type,
+             "location": location,
+             "timestamp": timestamp
         })
 
     except Exception as e:
