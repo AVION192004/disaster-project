@@ -81,6 +81,13 @@
   font-size: 14px;
   font-family: inherit;
   transition: all 0.3s;
+  position: relative;
+  z-index: 100;
+}
+
+.form-group select option {
+  background-color: #1a1a2e;
+  color: #fff;
 }
 
 .form-group input:focus,

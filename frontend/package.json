@@ -6,6 +6,7 @@
     "axios": "^1.7.9",
     "chart.js": "^4.5.1",
     "cra-template": "1.2.0",
+    "leaflet": "^1.9.4",
     "lucide-react": "^0.562.0",
     "react": "^19.0.0",
     "react-chartjs-2": "^5.3.1",
