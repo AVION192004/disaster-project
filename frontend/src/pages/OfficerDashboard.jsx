@@ -36,18 +36,11 @@ const OfficerDashboard = () => {
     }
   }, [officer]);
 
-  // Initialize map when component mounts and activeTab changes
+  // Initialize map when component mounts
   useEffect(() => {
-    if (activeTab === 'overview') {
-      // Wait for DOM to be ready
-      const timer = setTimeout(() => {
-        if (mapRef.current && !mapInstanceRef.current) {
-          initializeMap();
-        }
-      }, 100);
-      return () => clearTimeout(timer);
+    if (activeTab === 'overview' && mapRef.current && !mapInstanceRef.current) {
+      initializeMap();
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [activeTab]);
 
   // Update markers when reports change
@@ -60,25 +53,18 @@ const OfficerDashboard = () => {
 
   const initializeMap = () => {
     try {
-      // If map already exists, just update it
       if (mapInstanceRef.current) {
-        console.log('Map already exists, invalidating size');
-        mapInstanceRef.current.invalidateSize();
+        console.log('Map already initialized');
         return;
       }
 
-      const container = mapRef.current;
-      if (!container) {
-        console.error('Map container not found');
-        return;
-      }
-
-      console.log('Creating new map instance...');
-      
+      console.log('Initializing map...');
       const defaultCenter = [9.5915, 76.5215];
-      const map = L.map(container, {
+
+      const map = L.map(mapRef.current, {
         center: defaultCenter,
-        zoom: 8
+        zoom: 8,
+        attributionControl: true
       });
 
       L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
@@ -87,15 +73,9 @@ const OfficerDashboard = () => {
       }).addTo(map);
 
       mapInstanceRef.current = map;
-      console.log('✅ Map created successfully');
-      
-      // Update markers if reports exist
-      if (reports.length > 0) {
-        updateMapMarkers();
-      }
-      
+      console.log('✅ Map initialized successfully');
     } catch (error) {
-      console.error('❌ Error creating map:', error);
+      console.error('❌ Error initializing map:', error);
     }
   };
 
