@@ -53,7 +53,6 @@ export default function DamageAssessment() {
         resources: {
           personnel: Math.floor(Math.random() * 50) + 10,
           vehicles: Math.floor(Math.random() * 10) + 2,
-          estimatedCost: Math.floor(Math.random() * 500000) + 50000
         }
       };
       
@@ -183,15 +182,9 @@ export default function DamageAssessment() {
                 <h3 className="metric-label">Affected Area</h3>
                 <p className="metric-value metric-info">{result.affectedArea.toLocaleString()} m²</p>
               </div>
+              </div>  {/* ADD THIS CLOSING DIV */}
 
-              <div className="metric-card">
-                <h3 className="metric-label">Estimated Cost</h3>
-                <p className="metric-value metric-warning">
-                  ${result.resources.estimatedCost.toLocaleString()}
-                </p>
-              </div>
-            </div>
-
+                
             <div className="resources-section">
               <h3 className="resources-title">Required Resources</h3>
               <div className="resources-grid">
