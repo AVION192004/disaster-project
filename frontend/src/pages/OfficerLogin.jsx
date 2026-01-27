@@ -109,8 +109,8 @@ const OfficerLogin = () => {
           <p>
             <strong>Demo Login:</strong>
           </p>
-          <p>Email: officer1@rescue.com</p>
-          <p>Password: rescue123</p>
+          <p> officer1@rescue.com</p>
+          <p> rescue123</p>
         </div>
       </div>
     </div>
