@@ -20,7 +20,7 @@ CORS(app, resources={
 app.config['SECRET_KEY'] = 'your-secret-key-change-this-in-production'
 
 # Database path
-DB_PATH = 'rescueplex.db'
+DB_PATH = 'Rescuevision.db'
 
 # Initialize database
 def init_db():
@@ -342,7 +342,7 @@ def health():
 
 if __name__ == '__main__':
     print("=" * 50)
-    print("🚀 Rescueplex Officer Login Backend")
+    print("🚀 Rescuevision Officer Login Backend")
     print("=" * 50)
     print("Starting server on http://localhost:5000")
     print("\nDemo Credentials:")

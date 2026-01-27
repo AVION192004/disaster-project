@@ -5,7 +5,7 @@ import './Header.css';
 function Header() {
   return (
     <header className="header">
-      <div className="logo">Rescueplex.</div>
+      <div className="logo">Rescuevision.</div>
       <nav className="nav-links">
         <Link to="/" className="nav-link">Home</Link> {/* Home route */}
         <Link to="/features" className="nav-link">Features</Link> {/* Features route */}

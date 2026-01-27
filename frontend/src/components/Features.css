@@ -1,86 +1,177 @@
-.features {
-    min-height: 100vh; /* Ensures the section takes up the full height of the viewport */
-  padding: 4rem 2rem;
-  background: linear-gradient(135deg, #121212, #1f1f1f); /* Gradient background */
-  color: #ffffff; /* White text for dark theme */
-  text-align: center;
+.features-section-container {
+  background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+  color: #ffffff;
+  padding: 5rem 2rem;
+  min-height: 100vh;
   display: flex;
-  flex-direction: column; /* Ensure proper stacking of content */
-  justify-content: center; /* Center-align content vertically */
+  align-items: center;
+  justify-content: center;
+}
+
+.features-content-wrapper {
+  max-width: 1400px;
+  margin: 0 auto;
+  width: 100%;
+}
+
+/* Section Header */
+.features-header {
+  text-align: center;
+  margin-bottom: 4rem;
+  max-width: 800px;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+.features-main-title {
+  font-size: 3rem;
+  font-weight: 700;
+  line-height: 1.2;
+  margin-bottom: 1.5rem;
+  color: #ffffff;
+}
+
+.features-title-highlight {
+  color: #a78bfa;
+}
+
+.features-main-description {
+  font-size: 1.125rem;
+  line-height: 1.7;
+  color: #b4b4b4;
+  margin-bottom: 0;
+}
+
+/* Features Grid */
+.features-grid-container {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+  gap: 2rem;
+  margin-top: 3rem;
+}
+
+/* Feature Card */
+.feature-detail-card {
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 20px;
+  padding: 2.5rem;
+  transition: all 0.3s ease;
+  backdrop-filter: blur(10px);
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+}
+
+.feature-detail-card:hover {
+  background: rgba(255, 255, 255, 0.05);
+  border-color: rgba(139, 92, 246, 0.3);
+  transform: translateY(-8px);
+  box-shadow: 0 10px 30px rgba(139, 92, 246, 0.2);
+}
+
+/* Icon Wrapper */
+.feature-detail-icon-wrapper {
+  margin-bottom: 1.5rem;
+}
+
+.feature-detail-icon {
+  width: 56px;
+  height: 56px;
+  background: rgba(139, 92, 246, 0.15);
+  border-radius: 14px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #a78bfa;
+  transition: all 0.3s ease;
+}
+
+.feature-detail-card:hover .feature-detail-icon {
+  background: rgba(139, 92, 246, 0.25);
+  transform: scale(1.05);
+}
+
+.feature-detail-icon svg {
+  width: 28px;
+  height: 28px;
+}
+
+/* Card Title */
+.feature-detail-title {
+  font-size: 1.5rem;
+  font-weight: 600;
+  margin-bottom: 1rem;
+  color: #ffffff;
+  line-height: 1.3;
+}
+
+/* Card Description */
+.feature-detail-description {
+  font-size: 1rem;
+  line-height: 1.6;
+  color: #b4b4b4;
+  margin: 0;
+}
+
+/* Responsive Design */
+@media (max-width: 1200px) {
+  .features-grid-container {
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
   }
-  
-  .features-heading {
-    width: 80%; /* Set consistent width for heading */
-    margin: 0 auto; /* Center-align the heading */
+}
+
+@media (max-width: 768px) {
+  .features-section-container {
+    padding: 4rem 1.5rem;
   }
-  
-  .features-heading h2 {
-    font-size: 2.5rem;
-    font-weight: bold;
-    color: #ffffff;
-    margin-bottom: 1rem;
+
+  .features-main-title {
+    font-size: 2.25rem;
   }
-  
-  .features-heading p {
-    font-size: 1.2rem;
-    color: #b3b3b3;
-    margin-bottom: 2.5rem;
-  }
-  
-  .features-container {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); /* Responsive columns */
-    gap: 1.5rem;
-    width: 80%; /* Match width with the heading */
-    margin: 0 auto; /* Center-align the cards container */
-  }
-  
-  .feature-card {
-    background: #1f1f1f;
-    border: 1px solid #333333;
-    border-radius: 12px;
-    padding: 2rem;
-    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
-    text-align: center;
-    transition: transform 0.3s ease, box-shadow 0.3s ease;
-  }
-  
-  .feature-card:hover {
-    transform: scale(1.05); /* Slight zoom on hover */
-    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.5);
-  }
-  
-  .feature-icon {
-    font-size: 4rem; /* Larger size for emphasis */
-    color: #8338EC; /* Bright green for contrast */
-    margin-bottom: 1rem;
-  }
-  
-  .feature-card h3 {
-    font-size: 1.5rem;
-    font-weight: 600;
-    color: #ffffff;
-    margin-bottom: 0.8rem;
-  }
-  
-  .feature-card p {
+
+  .features-main-description {
     font-size: 1rem;
-    color: #b3b3b3;
-    line-height: 1.6;
   }
-  
-  .feature-card button {
-    background: #4caf50;
-    color: #ffffff;
-    padding: 0.8rem 1.5rem;
-    border: none;
-    border-radius: 8px;
-    cursor: pointer;
-    transition: background 0.3s ease;
-    margin-top: 1rem;
+
+  .features-grid-container {
+    grid-template-columns: 1fr;
+    gap: 1.5rem;
   }
-  
-  .feature-card button:hover {
-    background: #388e3c;
+
+  .feature-detail-card {
+    padding: 2rem;
   }
-  
+
+  .feature-detail-title {
+    font-size: 1.25rem;
+  }
+
+  .feature-detail-icon {
+    width: 48px;
+    height: 48px;
+  }
+
+  .feature-detail-icon svg {
+    width: 24px;
+    height: 24px;
+  }
+}
+
+@media (max-width: 480px) {
+  .features-section-container {
+    padding: 3rem 1rem;
+  }
+
+  .features-main-title {
+    font-size: 1.875rem;
+  }
+
+  .features-header {
+    margin-bottom: 3rem;
+  }
+
+  .feature-detail-card {
+    padding: 1.75rem;
+  }
+}

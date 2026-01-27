@@ -4,7 +4,7 @@
     display: flex;
     justify-content: center;
     align-items: center;
-    background: linear-gradient(to bottom, #121212, #1f1f1f); /* Rescueplex theme */
+    background: linear-gradient(to bottom, #121212, #1f1f1f); /* Rescuevision theme */
     font-family: "Poppins", Arial, sans-serif;
   }
   
@@ -35,7 +35,7 @@
   .signin-text-logo {
     font-size: 2rem;
     font-weight: bold;
-    color: #8338EC; /* Green color for Rescueplex theme */
+    color: #8338EC; /* Green color for Rescuevision theme */
     margin-bottom: 1rem;
   }
   

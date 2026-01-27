@@ -18,7 +18,7 @@ navigate("/officer/dashboard");
           ← Back
         </button>
         <div className="signin-content">
-          <div className="signin-text-logo">Rescueplex</div> {/* Text-based logo */}
+          <div className="signin-text-logo">Rescuevision</div> {/* Text-based logo */}
           <h2>Login</h2>
           <p>
             Welcome back! <span role="img" aria-label="wave">👋</span> Login to get started!

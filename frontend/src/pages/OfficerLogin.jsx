@@ -56,7 +56,7 @@ const OfficerLogin = () => {
           ← Back
         </button>
 
-        <h1 className="brand-name">Rescueplex</h1>
+        <h1 className="brand-name">Rescuevision</h1>
         <h2 className="auth-title">Officer Login</h2>
         <p className="auth-subtitle">Welcome back! 👋 Login to get started!</p>
 

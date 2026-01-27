@@ -3,9 +3,9 @@ import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
 
 import Header from "./components/Header";
 import HeroSection from "./components/HeroSection";
+import Features from "./components/Features";
 import HowItWorks from "./components/HowItWorks";
 import DamageAssessment from './components/DamageAssessment';
-import Features from "./components/Features";
 import SignUp from "./components/SignUp";
 import SignIn from "./components/SignIn";
 import Dashboard from "./components/Dashboard";
@@ -25,17 +25,21 @@ function App() {
       <div className="App">
         <Header />
         <Routes>
+          {/* Home Page Route - Updated with new sections */}
           <Route
             path="/"
             element={
               <>
                 <HeroSection />
+                <Features />
                 <HowItWorks />
                 <ReportDisaster />
                 <DamageAssessment />
               </>
             }
           />
+          
+          {/* Individual Page Routes */}
           <Route path="/damage-assessment" element={<DamageAssessment />} />
           <Route path="/features" element={<Features />} />
           <Route path="/signup" element={<SignUp />} />

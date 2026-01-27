@@ -19,7 +19,7 @@ function SignIn({ onSignIn }) {
         </button>
 
         <div className="signin-content">
-          <div className="signin-text-logo">Rescueplex</div>
+          <div className="signin-text-logo">Rescuevision</div>
           <h2>Login</h2>
           <p>
             Welcome back! <span role="img" aria-label="wave">👋</span> Login to get started!

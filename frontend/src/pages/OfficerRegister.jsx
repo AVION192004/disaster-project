@@ -77,7 +77,7 @@ const OfficerRegister = () => {
           ← Back
         </button>
         
-        <h1 className="brand-name">Rescueplex</h1>
+        <h1 className="brand-name">Rescuevision</h1>
         <h2 className="auth-title">Officer Registration</h2>
         <p className="auth-subtitle">Join our rescue team! 🚒 Register to get started</p>
 
