@@ -11,7 +11,7 @@ import SignIn from "./components/SignIn";
 import Dashboard from "./components/Dashboard";
 import ProtectedRoute from "./components/ProtectedRoute";
 import ReportDisaster from "./components/ReportDisaster";
-
+import FirstAid from "./components/FirstAid";
 import OfficerRegister from "./pages/OfficerRegister";
 import OfficerLogin from "./pages/OfficerLogin";
 import OfficerDashboard from "./pages/OfficerDashboard";
@@ -43,6 +43,8 @@ function App() {
           <Route path="/damage-assessment" element={<DamageAssessment />} />
           <Route path="/features" element={<Features />} />
           <Route path="/signup" element={<SignUp />} />
+          <Route path="/first-aid" element={<FirstAid />} />
+
           <Route
             path="/signIn"
             element={<SignIn onSignIn={() => setIsAuthenticated(true)} />}

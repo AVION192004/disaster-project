@@ -1,45 +1,189 @@
+/* Header Container */
 .header {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 1rem 2rem;
-  background-color: #1f1f1f; /* Slightly lighter dark for header */
-  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.5);
-  font-family: 'Poppins', Arial, sans-serif;
+  padding: 1rem 3rem;
+  background: rgba(26, 26, 46, 0.95);
+  backdrop-filter: blur(10px);
+  position: sticky;
+  top: 0;
+  z-index: 1000;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
 }
 
+/* Logo */
 .logo {
   font-size: 1.5rem;
-  font-weight: bold;
+  font-weight: 700;
   color: #ffffff;
 }
 
-.nav-links {
-  display: flex;
-  gap: 1.5rem;
-}
-
-.nav-links a {
+.logo-link {
+  color: #a78bfa;
   text-decoration: none;
-  font-size: 1rem;
-  color: #b3b3b3; /* Subtle gray */
   transition: color 0.3s ease;
 }
 
-.nav-links a:hover {
-  color: #ffffff;
+.logo-link:hover {
+  color: #8b5cf6;
 }
 
+/* Navigation Links */
+.nav-links {
+  display: flex;
+  gap: 2rem;
+  align-items: center;
+}
+
+.nav-link {
+  color: #ffffff;
+  text-decoration: none;
+  font-size: 1rem;
+  font-weight: 500;
+  transition: color 0.3s ease;
+  position: relative;
+}
+
+.nav-link::after {
+  content: '';
+  position: absolute;
+  width: 0;
+  height: 2px;
+  bottom: -5px;
+  left: 0;
+  background: #a78bfa;
+  transition: width 0.3s ease;
+}
+
+.nav-link:hover {
+  color: #a78bfa;
+}
+
+.nav-link:hover::after {
+  width: 100%;
+}
+
+/* Header Actions (Buttons) */
+.header-actions {
+  display: flex;
+  gap: 1rem;
+  align-items: center;
+}
+
+.sign-in-link,
+.sign-up-link {
+  text-decoration: none;
+}
+
+/* Sign In Button */
+.sign-in {
+  padding: 0.625rem 1.5rem;
+  background: transparent;
+  color: #ffffff;
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  border-radius: 8px;
+  font-size: 0.95rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  font-family: inherit;
+}
+
+.sign-in:hover {
+  background: rgba(255, 255, 255, 0.1);
+  border-color: #a78bfa;
+  color: #a78bfa;
+}
+
+/* Sign Up Button */
 .sign-up {
-  background-color: #8338EC; /* Accent green */
+  padding: 0.625rem 1.5rem;
+  background: linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%);
   color: #ffffff;
   border: none;
-  padding: 0.5rem 1rem;
-  border-radius: 5px;
+  border-radius: 8px;
+  font-size: 0.95rem;
+  font-weight: 500;
   cursor: pointer;
-  transition: background-color 0.3s ease;
+  transition: all 0.3s ease;
+  box-shadow: 0 4px 15px rgba(139, 92, 246, 0.3);
+  font-family: inherit;
 }
 
 .sign-up:hover {
-  background-color: #9482fb; /* Slightly brighter green on hover */
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(139, 92, 246, 0.4);
+}
+
+/* Responsive Design */
+@media (max-width: 1024px) {
+  .header {
+    padding: 1rem 2rem;
+  }
+
+  .nav-links {
+    gap: 1.5rem;
+  }
+}
+
+@media (max-width: 768px) {
+  .header {
+    padding: 1rem 1.5rem;
+    flex-wrap: wrap;
+    gap: 1rem;
+  }
+
+  .logo {
+    font-size: 1.25rem;
+  }
+
+  .nav-links {
+    order: 3;
+    width: 100%;
+    justify-content: center;
+    gap: 1rem;
+    padding-top: 1rem;
+    border-top: 1px solid rgba(255, 255, 255, 0.1);
+  }
+
+  .nav-link {
+    font-size: 0.9rem;
+  }
+
+  .header-actions {
+    gap: 0.75rem;
+  }
+
+  .sign-in,
+  .sign-up {
+    padding: 0.5rem 1.25rem;
+    font-size: 0.9rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .header {
+    padding: 1rem;
+  }
+
+  .nav-links {
+    flex-wrap: wrap;
+    gap: 0.75rem;
+  }
+
+  .nav-link {
+    font-size: 0.85rem;
+  }
+
+  .header-actions {
+    flex-direction: column;
+    gap: 0.5rem;
+  }
+
+  .sign-in,
+  .sign-up {
+    width: 100%;
+    padding: 0.5rem 1rem;
+  }
 }
