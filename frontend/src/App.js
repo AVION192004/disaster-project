@@ -31,7 +31,6 @@ function App() {
             element={
               <>
                 <HeroSection />
-                <Features />
                 <HowItWorks />
                 <ReportDisaster />
                 <DamageAssessment />
