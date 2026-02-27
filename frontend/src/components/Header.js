@@ -10,6 +10,7 @@ function Header() {
       </div>
       <nav className="nav-links">
         <Link to="/" className="nav-link">Home</Link>
+        <Link to="/report-disaster" className="nav-link">Report Disaster</Link> {/* ADD THIS */}
         <Link to="/features" className="nav-link">Features</Link>
         <Link to="/first-aid" className="nav-link">First Aid</Link>
         <Link to="/dashboard" className="nav-link">Dashboard</Link>

@@ -2,6 +2,8 @@ import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
+import 'leaflet-control-geocoder/dist/Control.Geocoder.css';
+import LgeocodeControl from 'leaflet-control-geocoder';
 
 const OfficerDashboard = () => {
   const navigate = useNavigate();
@@ -36,19 +38,16 @@ const OfficerDashboard = () => {
     }
   }, [officer]);
 
-  // Initialize map when component mounts
   useEffect(() => {
     if (activeTab === 'overview' && mapRef.current && !mapInstanceRef.current) {
       initializeMap();
     }
   }, [activeTab]);
 
-  // Update markers when reports change
   useEffect(() => {
     if (activeTab === 'overview' && mapInstanceRef.current && reports.length > 0) {
       updateMapMarkers();
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [reports, activeTab]);
 
   const initializeMap = () => {
@@ -58,7 +57,7 @@ const OfficerDashboard = () => {
         return;
       }
 
-      console.log('Initializing map...');
+      console.log('Initializing Leaflet map...');
       const defaultCenter = [9.5915, 76.5215];
 
       const map = L.map(mapRef.current, {
@@ -67,102 +66,57 @@ const OfficerDashboard = () => {
         attributionControl: true
       });
 
+      // Add OpenStreetMap tiles (FREE)
       L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
         attribution: '© OpenStreetMap contributors',
         maxZoom: 19,
       }).addTo(map);
 
+      // Add search control (FREE)
+      L.Control.geocoder().addTo(map);
+
+      // Add scale
+      L.control.scale().addTo(map);
+
+      // Add full screen button
+      const fullscreenControl = L.control({
+        position: 'topright'
+      });
+
+      fullscreenControl.onAdd = () => {
+        const div = L.DomUtil.create('div', 'leaflet-control leaflet-bar');
+        div.innerHTML = `
+          <button style="
+            width: 36px;
+            height: 36px;
+            background-color: white;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 20px;
+            line-height: 36px;
+            text-align: center;
+          " title="Toggle Fullscreen">⛶</button>
+        `;
+        
+        div.querySelector('button').onclick = () => {
+          if (!document.fullscreenElement) {
+            document.documentElement.requestFullscreen();
+          } else {
+            document.exitFullscreen();
+          }
+        };
+        
+        return div;
+      };
+
+      fullscreenControl.addTo(map);
+
       mapInstanceRef.current = map;
-      console.log('✅ Map initialized successfully');
+      console.log('✅ Leaflet Map initialized successfully');
     } catch (error) {
       console.error('❌ Error initializing map:', error);
     }
-  };
-
-  const getSeverityColor = (severity) => {
-    switch (severity) {
-      case 'Critical':
-        return '#ff5252';
-      case 'High':
-        return '#ffb84d';
-      case 'Medium':
-        return '#2196f3';
-      case 'Low':
-        return '#4caf50';
-      default:
-        return '#999';
-    }
-  };
-
-  const createCustomMarker = (severity) => {
-    const color = getSeverityColor(severity);
-    return L.divIcon({
-      html: `<div style="
-        width: 35px;
-        height: 35px;
-        background-color: ${color};
-        border: 3px solid white;
-        border-radius: 50%;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        font-size: 18px;
-        box-shadow: 0 2px 8px rgba(0,0,0,0.4);
-        cursor: pointer;
-      ">📍</div>`,
-      iconSize: [35, 35],
-      className: 'custom-marker',
-    });
-  };
-
-  const updateMapMarkers = () => {
-    if (!mapInstanceRef.current) return;
-
-    const map = mapInstanceRef.current;
-
-    // Remove all existing markers
-    map.eachLayer((layer) => {
-      if (layer instanceof L.Marker) {
-        map.removeLayer(layer);
-      }
-    });
-
-    const bounds = L.latLngBounds();
-    let hasMarkers = false;
-
-    reports.forEach((report) => {
-      let lat = 9.5915 + (report.id * 0.05) % 0.5;
-      let lng = 76.5215 + (report.id * 0.03) % 0.5;
-
-      const marker = L.marker([lat, lng], {
-        icon: createCustomMarker(report.severity),
-        title: report.name
-      }).addTo(map);
-
-      const popupContent = `
-        <div style="font-family: Arial; color: #333; min-width: 250px;">
-          <h4 style="margin: 0 0 10px 0; color: #333; border-bottom: 2px solid ${getSeverityColor(report.severity)}; padding-bottom: 8px;">
-            ${report.name}
-          </h4>
-          <p style="margin: 6px 0;"><strong>📍 Location:</strong> ${report.location}</p>
-          <p style="margin: 6px 0;"><strong>🎯 Severity:</strong> <span style="background: ${getSeverityColor(report.severity)}33; color: ${getSeverityColor(report.severity)}; padding: 2px 6px; border-radius: 3px; font-weight: 600;">${report.severity}</span></p>
-          <p style="margin: 6px 0;"><strong>✅ Status:</strong> ${report.status}</p>
-          <p style="margin: 6px 0;"><strong>👤 Reporter:</strong> ${report.reporter_name}</p>
-          ${report.reporter_phone ? `<p style="margin: 6px 0;"><strong>📱 Phone:</strong> ${report.reporter_phone}</p>` : ''}
-          <p style="margin: 8px 0 0 0; font-size: 12px; color: #666;">📅 ${new Date(report.created_at).toLocaleDateString()}</p>
-        </div>
-      `;
-
-      marker.bindPopup(popupContent);
-      bounds.extend([lat, lng]);
-      hasMarkers = true;
-    });
-
-    if (hasMarkers) {
-      map.fitBounds(bounds, { padding: [50, 50] });
-    }
-
-    console.log('✅ Markers updated');
   };
 
   const fetchReports = async () => {
@@ -196,38 +150,119 @@ const OfficerDashboard = () => {
       }
     } catch (err) {
       console.error('Error updating status:', err);
-      alert('Failed to update status');
     }
   };
 
   const handleLogout = () => {
     localStorage.removeItem('officer_token');
     localStorage.removeItem('officer_data');
-    navigate('/');
+    navigate('/officer/login');
   };
 
-  if (loading) {
-    return (
-      <div style={{ padding: '40px', textAlign: 'center', color: '#fff', minHeight: '100vh', backgroundColor: '#1a1a2e' }}>
-        <p>Loading...</p>
-      </div>
-    );
-  }
+  const getSeverityColor = (severity) => {
+    switch (severity) {
+      case 'Critical':
+        return '#ff5252';
+      case 'High':
+        return '#ffb84d';
+      case 'Medium':
+        return '#2196f3';
+      case 'Low':
+        return '#4caf50';
+      default:
+        return '#999';
+    }
+  };
 
-  if (!officer) {
-    return null;
-  }
+  const createCustomMarker = (severity) => {
+    const color = getSeverityColor(severity);
+    return L.divIcon({
+      html: `<div style="
+        width: 40px;
+        height: 40px;
+        background: linear-gradient(135deg, ${color}, ${color}dd);
+        border: 3px solid white;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 20px;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.4);
+        cursor: pointer;
+      ">📍</div>`,
+      iconSize: [40, 40],
+      className: 'custom-marker',
+    });
+  };
 
-  const filteredReports = selectedStatus === 'All' ? reports : reports.filter((r) => r.status === selectedStatus);
+  const updateMapMarkers = () => {
+    if (!mapInstanceRef.current) return;
+
+    const map = mapInstanceRef.current;
+
+    // Remove all existing markers
+    map.eachLayer((layer) => {
+      if (layer instanceof L.Marker) {
+        map.removeLayer(layer);
+      }
+    });
+
+    const bounds = L.latLngBounds();
+    let hasMarkers = false;
+
+    reports.forEach((report) => {
+      const lat = parseFloat(report.latitude) || (9.5915 + (report.id * 0.05) % 0.5);
+      const lng = parseFloat(report.longitude) || (76.5215 + (report.id * 0.03) % 0.5);
+
+      const marker = L.marker([lat, lng], {
+        icon: createCustomMarker(report.severity),
+        title: report.name
+      }).addTo(map);
+
+      const popupContent = `
+        <div style="font-family: Arial; color: #333; min-width: 250px;">
+          <h4 style="margin: 0 0 10px 0; color: #333; border-bottom: 2px solid ${getSeverityColor(report.severity)}; padding-bottom: 8px;">
+            ${report.name}
+          </h4>
+          <p style="margin: 6px 0;"><strong>📍 Location:</strong> ${report.location}</p>
+          <p style="margin: 6px 0;"><strong>🎯 Severity:</strong> <span style="background: ${getSeverityColor(report.severity)}33; color: ${getSeverityColor(report.severity)}; padding: 2px 6px; border-radius: 3px; font-weight: 600;">${report.severity}</span></p>
+          <p style="margin: 6px 0;"><strong>📝 Status:</strong> ${report.status}</p>
+          <p style="margin: 6px 0;"><strong>👤 Reporter:</strong> ${report.reporter_name}</p>
+          ${report.reporter_phone ? `<p style="margin: 6px 0;"><strong>📱 Phone:</strong> ${report.reporter_phone}</p>` : ''}
+          <p style="margin: 8px 0 0 0; font-size: 12px; color: #666;">📅 ${new Date(report.created_at).toLocaleDateString()}</p>
+        </div>
+      `;
+
+      marker.bindPopup(popupContent);
+      bounds.extend([lat, lng]);
+      hasMarkers = true;
+    });
+
+    if (hasMarkers) {
+      map.fitBounds(bounds, { padding: [50, 50] });
+    }
+
+    console.log('✅ Markers updated');
+  };
 
   const stats = {
     total: reports.length,
     pending: reports.filter((r) => r.status === 'Pending').length,
     inProgress: reports.filter((r) => r.status === 'In Progress').length,
     completed: reports.filter((r) => r.status === 'Completed').length,
-    avgResponseTime: '2.3 hrs',
+    avgResponseTime: '2h 15m',
     resolutionRate: reports.length > 0 ? Math.round((reports.filter((r) => r.status === 'Completed').length / reports.length) * 100) : 0,
   };
+
+  const filteredReports = selectedStatus === 'All'
+    ? reports
+    : reports.filter((r) => r.status === selectedStatus);
+
+  const highPriorityReports = reports.filter((r) => ['Critical', 'High'].includes(r.severity)).slice(0, 3);
+
+  if (!officer) {
+    return <div style={{ color: 'white', textAlign: 'center', padding: '50px' }}>Loading...</div>;
+  }
 
   return (
     <div style={{ maxWidth: '1400px', margin: '0 auto', padding: '40px 20px', backgroundColor: '#1a1a2e', minHeight: '100vh', color: 'white' }}>
@@ -278,7 +313,7 @@ const OfficerDashboard = () => {
 
           {/* Map and Priority */}
           <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr', gap: '20px' }}>
-            {/* Map */}
+            {/* Leaflet Map */}
             <div
               ref={mapRef}
               style={{
@@ -294,12 +329,19 @@ const OfficerDashboard = () => {
             />
 
             {/* High Priority */}
-            <div style={{ backgroundColor: 'rgba(80, 80, 120, 0.2)', padding: '20px', borderRadius: '12px', border: '1px solid rgba(255, 255, 255, 0.1)' }}>
-              <h3 style={{ color: '#b366ff', marginBottom: '20px' }}>🔴 High Priority</h3>
-              {reports.filter((r) => r.severity === 'Critical' || r.severity === 'High').length > 0 ? (
-                reports.filter((r) => r.severity === 'Critical' || r.severity === 'High').map((report) => (
-                  <div key={report.id} style={{ backgroundColor: 'rgba(60, 60, 90, 0.5)', padding: '12px', borderRadius: '8px', marginBottom: '10px', borderLeft: `4px solid ${getSeverityColor(report.severity)}` }}>
-                    <div style={{ fontWeight: '600', marginBottom: '3px' }}>📍 {report.name}</div>
+            <div style={{
+              backgroundColor: 'rgba(80, 80, 120, 0.2)',
+              padding: '20px',
+              borderRadius: '12px',
+              border: '1px solid rgba(255, 255, 255, 0.1)',
+              maxHeight: '500px',
+              overflowY: 'auto'
+            }}>
+              <h3 style={{ marginBottom: '20px', color: '#ff5252' }}>🔴 High Priority Cases</h3>
+              {highPriorityReports.length > 0 ? (
+                highPriorityReports.map((report) => (
+                  <div key={report.id} style={{ backgroundColor: 'rgba(255, 82, 82, 0.1)', padding: '15px', borderRadius: '8px', marginBottom: '15px', borderLeft: `4px solid ${getSeverityColor(report.severity)}` }}>
+                    <p style={{ fontWeight: 'bold', marginBottom: '5px' }}>{report.name}</p>
                     <div style={{ fontSize: '12px', color: '#999' }}>{report.location}</div>
                   </div>
                 ))
@@ -335,6 +377,7 @@ const OfficerDashboard = () => {
                       <p style={{ color: '#ccc', marginBottom: '5px' }}>Location: {report.location}</p>
                       <p style={{ color: '#999', fontSize: '14px' }}>Reported by: {report.reporter_name}</p>
                     </div>
+
                     <span style={{ padding: '8px 16px', borderRadius: '8px', backgroundColor: getSeverityColor(report.severity), color: 'white', fontWeight: 'bold' }}>
                       {report.severity}
                     </span>
@@ -344,6 +387,7 @@ const OfficerDashboard = () => {
 
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                     <span style={{ color: '#999', fontSize: '14px' }}>Reported: {new Date(report.created_at).toLocaleDateString()}</span>
+
                     <select value={report.status} onChange={(e) => handleUpdateStatus(report.id, e.target.value)} style={{ padding: '8px 15px', backgroundColor: 'rgba(60, 60, 90, 0.5)', border: '1px solid rgba(255, 255, 255, 0.2)', borderRadius: '8px', color: 'white', cursor: 'pointer' }}>
                       <option value="Pending">Pending</option>
                       <option value="In Progress">In Progress</option>
