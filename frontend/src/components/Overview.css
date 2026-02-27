@@ -1,0 +1,392 @@
+/* ============================================================
+   Overview — RescueVision Enterprise Design System
+   Tokens mirror Dashboard.css / ResourceAllocation.css
+   ============================================================ */
+
+.ov-wrap *,
+.ov-wrap *::before,
+.ov-wrap *::after {
+  box-sizing: border-box;
+}
+
+.ov-wrap {
+  width: 100%;
+  color: #F0F2F7;
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+/* ── Page header ─────────────────────────────────────────── */
+.ov-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+
+.ov-title {
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: #F0F2F7;
+  margin: 0;
+  letter-spacing: -0.02em;
+}
+
+.ov-subtitle {
+  font-size: 0.875rem;
+  color: #8B95A8;
+  margin: 0.25rem 0 0;
+  line-height: 1.6;
+}
+
+.ov-report-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4375rem;
+  padding: 0.5rem 1rem;
+  background: #6B48FF;
+  color: #ffffff;
+  border: none;
+  border-radius: 6px;
+  font-size: 0.875rem;
+  font-weight: 600;
+  font-family: inherit;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: background 0.15s ease, box-shadow 0.15s ease;
+}
+
+.ov-report-btn:hover {
+  background: #5538E0;
+  box-shadow: 0 2px 10px rgba(107,72,255,0.22);
+}
+
+/* ── Stat cards ──────────────────────────────────────────── */
+.ov-stats-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 1rem;
+}
+
+.ov-stat-card {
+  position: relative;
+  background: #161B27;
+  border: 1px solid #2A3347;
+  border-radius: 8px;
+  padding: 1.25rem 1.25rem 1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  overflow: hidden;
+}
+
+.ov-stat-card__value {
+  font-size: 2rem;
+  font-weight: 700;
+  color: var(--accent, #F0F2F7);
+  letter-spacing: -0.03em;
+  line-height: 1;
+}
+
+.ov-stat-card__label {
+  font-size: 0.8125rem;
+  font-weight: 500;
+  color: #8B95A8;
+  margin-top: 0.25rem;
+}
+
+.ov-stat-card__sub {
+  font-size: 0.75rem;
+  color: #56617A;
+}
+
+/* Accent bar at bottom */
+.ov-stat-card__bar {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 3px;
+  background: var(--accent, #6B48FF);
+  opacity: 0.5;
+}
+
+/* ── Bottom 2-col grid ───────────────────────────────────── */
+.ov-bottom-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1rem;
+}
+
+/* ── Generic card ────────────────────────────────────────── */
+.ov-card {
+  background: #161B27;
+  border: 1px solid #2A3347;
+  border-radius: 8px;
+  padding: 1.25rem 1.5rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.ov-card--full {
+  /* spans full width when inside flex column */
+}
+
+.ov-card__title {
+  font-size: 0.9375rem;
+  font-weight: 600;
+  color: #F0F2F7;
+  margin: 0;
+  letter-spacing: -0.01em;
+}
+
+.ov-card__header-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.ov-see-all-btn {
+  background: transparent;
+  border: none;
+  color: #6B48FF;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  font-family: inherit;
+  cursor: pointer;
+  padding: 0;
+  transition: color 0.15s ease;
+}
+
+.ov-see-all-btn:hover {
+  color: #5538E0;
+}
+
+/* ── Severity breakdown ──────────────────────────────────── */
+.ov-severity-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.875rem;
+}
+
+.ov-severity-row {
+  display: grid;
+  grid-template-columns: 70px 1fr 36px;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.ov-severity-row__label {
+  font-size: 0.8125rem;
+  font-weight: 600;
+}
+
+.ov-severity-row__track {
+  height: 6px;
+  background: #2A3347;
+  border-radius: 3px;
+  overflow: hidden;
+}
+
+.ov-severity-row__fill {
+  height: 100%;
+  border-radius: 3px;
+  transition: width 0.5s ease;
+  min-width: 2px;
+}
+
+.ov-severity-row__count {
+  font-size: 0.8125rem;
+  color: #8B95A8;
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+
+/* ── Disaster types list ─────────────────────────────────── */
+.ov-type-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  background: #2A3347;
+  border: 1px solid #2A3347;
+  border-radius: 6px;
+  overflow: hidden;
+}
+
+.ov-type-item {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.625rem 0.875rem;
+  background: #1E2636;
+  font-size: 0.875rem;
+}
+
+.ov-type-item__rank {
+  width: 20px;
+  height: 20px;
+  border-radius: 4px;
+  background: rgba(107,72,255,0.12);
+  color: #6B48FF;
+  font-size: 0.7rem;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.ov-type-item__name {
+  flex: 1;
+  color: #F0F2F7;
+  font-weight: 500;
+  text-transform: capitalize;
+}
+
+.ov-type-item__count {
+  color: #56617A;
+  font-size: 0.8125rem;
+}
+
+/* ── Recent reports table ────────────────────────────────── */
+.ov-table-wrap {
+  overflow-x: auto;
+  border: 1px solid #2A3347;
+  border-radius: 6px;
+}
+
+.ov-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.875rem;
+}
+
+.ov-table__th {
+  padding: 0.625rem 0.875rem;
+  text-align: left;
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: #56617A;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  background: #1A2030;
+  border-bottom: 1px solid #2A3347;
+  white-space: nowrap;
+}
+
+.ov-table__row {
+  border-bottom: 1px solid #2A3347;
+  transition: background 0.12s ease;
+}
+
+.ov-table__row:last-child {
+  border-bottom: none;
+}
+
+.ov-table__row:hover {
+  background: rgba(255,255,255,0.02);
+}
+
+.ov-table__td {
+  padding: 0.75rem 0.875rem;
+  color: #F0F2F7;
+  vertical-align: middle;
+}
+
+.ov-table__td--id {
+  color: #56617A;
+  font-size: 0.8rem;
+  font-variant-numeric: tabular-nums;
+}
+
+.ov-table__td--loc {
+  color: #8B95A8;
+  font-size: 0.8375rem;
+}
+
+.ov-table__td--date {
+  color: #56617A;
+  font-size: 0.8rem;
+  white-space: nowrap;
+}
+
+/* ── Badge ───────────────────────────────────────────────── */
+.ov-badge {
+  display: inline-block;
+  padding: 0.2rem 0.5rem;
+  border-radius: 4px;
+  font-size: 0.7rem;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+/* ── Empty / loading / error ─────────────────────────────── */
+.ov-empty {
+  font-size: 0.875rem;
+  color: #56617A;
+  margin: 0;
+}
+
+.ov-loading {
+  display: flex;
+  align-items: center;
+  gap: 0.625rem;
+  font-size: 0.875rem;
+  color: #56617A;
+  padding: 2rem 0;
+}
+
+.ov-loading__spinner {
+  display: inline-block;
+  width: 14px;
+  height: 14px;
+  border: 2px solid #2A3347;
+  border-top-color: #6B48FF;
+  border-radius: 50%;
+  animation: ov-spin 0.75s linear infinite;
+}
+
+@keyframes ov-spin {
+  to { transform: rotate(360deg); }
+}
+
+.ov-error {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.875rem;
+  color: #EF4444;
+  padding: 1rem;
+  background: rgba(239,68,68,0.08);
+  border: 1px solid rgba(239,68,68,0.2);
+  border-radius: 6px;
+}
+
+/* ── Responsive ──────────────────────────────────────────── */
+@media (max-width: 900px) {
+  .ov-stats-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+  .ov-bottom-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 560px) {
+  .ov-stats-grid {
+    grid-template-columns: 1fr 1fr;
+  }
+  .ov-header {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+}

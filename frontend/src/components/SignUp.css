@@ -1,114 +1,335 @@
-/* Container for the entire page */
-.signup-container {
-    min-height: 100vh;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    background: linear-gradient(to bottom, #121212, #1f1f1f); /* Rescuevision theme */
-    font-family: "Poppins", Arial, sans-serif;
+/* ============================================================
+   SignUp — RescueVision Enterprise Design System
+   Tokens:
+     #0D1117  bg-primary
+     #161B27  bg-secondary
+     #1E2636  surface
+     #2A3347  border
+     #6B48FF  purple-primary
+     #5538E0  purple-hover
+     #4329C2  purple-active
+     #F0F2F7  text-primary
+     #8B95A8  text-secondary
+     #56617A  text-tertiary
+     #22C55E  status-green
+   ============================================================ */
+
+/* ── Reset ───────────────────────────────────────────────── */
+.signup-page *,
+.signup-page *::before,
+.signup-page *::after {
+  box-sizing: border-box;
+}
+
+/* ── Page layout — two columns ───────────────────────────── */
+.signup-page {
+  min-height: 100vh;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  background: #0D1117;
+  color: #F0F2F7;
+  font-family: inherit;
+}
+
+/* ── Left — brand panel ──────────────────────────────────── */
+.signup-brand {
+  background: #161B27;
+  border-right: 1px solid #2A3347;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 3rem;
+  position: sticky;
+  top: 0;
+  height: 100vh;
+}
+
+.signup-brand__inner {
+  max-width: 360px;
+  display: flex;
+  flex-direction: column;
+  gap: 2.5rem;
+}
+
+/* Logo */
+.signup-brand__logo {
+  display: flex;
+  align-items: center;
+  gap: 0.625rem;
+}
+
+.signup-brand__mark {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  background: #6B48FF;
+  color: #ffffff;
+  font-size: 0.7rem;
+  font-weight: 700;
+  border-radius: 7px;
+  letter-spacing: 0.02em;
+  flex-shrink: 0;
+}
+
+.signup-brand__name {
+  font-size: 1.0625rem;
+  font-weight: 600;
+  color: #F0F2F7;
+  letter-spacing: -0.01em;
+}
+
+/* Stats row */
+.signup-brand__stats {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  padding: 1.25rem;
+  background: #1E2636;
+  border: 1px solid #2A3347;
+  border-radius: 8px;
+}
+
+.signup-brand__stat {
+  display: flex;
+  align-items: baseline;
+  gap: 0.625rem;
+}
+
+.signup-brand__stat-number {
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: #F0F2F7;
+  letter-spacing: -0.02em;
+  line-height: 1;
+}
+
+.signup-brand__stat-label {
+  font-size: 0.8125rem;
+  color: #8B95A8;
+}
+
+/* Quote */
+.signup-brand__quote {
+  font-size: 0.9375rem;
+  line-height: 1.65;
+  color: #8B95A8;
+  margin: 0;
+  padding: 0;
+  border: none;
+  font-style: normal;
+}
+
+.signup-brand__cite {
+  display: block;
+  margin-top: 0.75rem;
+  font-size: 0.8rem;
+  color: #56617A;
+  font-style: normal;
+  font-weight: 500;
+}
+
+/* Status line */
+.signup-brand__meta {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.8125rem;
+  color: #56617A;
+  font-weight: 500;
+}
+
+.signup-brand__dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: #22C55E;
+  flex-shrink: 0;
+}
+
+/* ── Right — form panel ──────────────────────────────────── */
+.signup-main {
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+  padding: 3rem 2rem;
+  overflow-y: auto;
+}
+
+.signup-card {
+  width: 100%;
+  max-width: 420px;
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+  padding: 1rem 0 2rem;
+}
+
+/* ── Back button ─────────────────────────────────────────── */
+.signup-back {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.375rem;
+  background: transparent;
+  border: none;
+  color: #56617A;
+  font-size: 0.875rem;
+  font-weight: 500;
+  font-family: inherit;
+  cursor: pointer;
+  padding: 0;
+  transition: color 0.15s ease;
+  width: fit-content;
+}
+
+.signup-back:hover {
+  color: #8B95A8;
+}
+
+/* ── Header ──────────────────────────────────────────────── */
+.signup-header {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.signup-title {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: #F0F2F7;
+  margin: 0;
+  letter-spacing: -0.02em;
+  line-height: 1.25;
+}
+
+.signup-subtitle {
+  font-size: 0.9rem;
+  color: #8B95A8;
+  margin: 0;
+  line-height: 1.6;
+}
+
+/* ── Form ────────────────────────────────────────────────── */
+.signup-form {
+  display: flex;
+  flex-direction: column;
+  gap: 1.125rem;
+}
+
+/* Side-by-side first/last name */
+.signup-form__row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.75rem;
+}
+
+.form-field {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4375rem;
+}
+
+.form-label {
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: #F0F2F7;
+}
+
+.form-input {
+  width: 100%;
+  padding: 0.625rem 0.875rem;
+  background: #161B27;
+  border: 1px solid #2A3347;
+  border-radius: 6px;
+  font-size: 0.9rem;
+  font-family: inherit;
+  color: #F0F2F7;
+  outline: none;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+.form-input::placeholder {
+  color: #56617A;
+}
+
+.form-input:focus {
+  border-color: #6B48FF;
+  box-shadow: 0 0 0 3px rgba(107, 72, 255, 0.12);
+}
+
+/* ── Submit button ───────────────────────────────────────── */
+.signup-submit {
+  width: 100%;
+  padding: 0.6875rem 1.25rem;
+  background: #6B48FF;
+  color: #ffffff;
+  border: none;
+  border-radius: 6px;
+  font-size: 0.9375rem;
+  font-weight: 600;
+  font-family: inherit;
+  cursor: pointer;
+  transition: background 0.15s ease, box-shadow 0.15s ease;
+  margin-top: 0.25rem;
+}
+
+.signup-submit:hover {
+  background: #5538E0;
+  box-shadow: 0 2px 10px rgba(107, 72, 255, 0.22);
+}
+
+.signup-submit:active {
+  background: #4329C2;
+  box-shadow: none;
+}
+
+/* ── Footer link ─────────────────────────────────────────── */
+.signup-footer {
+  font-size: 0.875rem;
+  color: #8B95A8;
+  margin: 0;
+  text-align: center;
+}
+
+.signup-footer__link {
+  color: #6B48FF;
+  text-decoration: none;
+  font-weight: 600;
+  transition: color 0.15s ease;
+}
+
+.signup-footer__link:hover {
+  color: #5538E0;
+}
+
+/* ── Responsive ──────────────────────────────────────────── */
+@media (max-width: 768px) {
+  .signup-page {
+    grid-template-columns: 1fr;
   }
-  
-  /* Sign-up card */
+
+  .signup-brand {
+    display: none;
+  }
+
+  .signup-main {
+    padding: 2rem 1.5rem;
+    align-items: flex-start;
+  }
+
   .signup-card {
-    background: #ffffff;
-    width: 400px;
-    border-radius: 15px;
-    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
-    padding: 2rem;
-    text-align: center;
-    position: relative;
+    max-width: 100%;
+    padding-top: 1.5rem;
   }
-  
-  /* Back button */
-  .back-button {
-    position: absolute;
-    top: 1rem;
-    left: 1rem;
-    background: transparent;
-    border: none;
-    color: #8338EC;
-    font-size: 1rem;
-    cursor: pointer;
+}
+
+@media (max-width: 480px) {
+  .signup-main {
+    padding: 2rem 1.25rem;
   }
-  
-  /* Text-based logo */
-  .signup-text-logo {
-    font-size: 2rem;
-    font-weight: bold;
-    color: #8338EC; /* Green color for Rescuevision theme */
-    margin-bottom: 1rem;
+
+  .signup-form__row {
+    grid-template-columns: 1fr;
   }
-  
-  /* Title and description */
-  .signup-card h2 {
-    font-size: 1.8rem;
-    font-weight: bold;
-    color: #121212;
-    margin-bottom: 0.5rem;
-  }
-  
-  .signup-card p {
-    font-size: 1rem;
-    color: #666666;
-    margin-bottom: 2rem;
-  }
-  
-  /* Form styles */
-  .signup-form {
-    width: 100%;
-  }
-  
-  .form-group {
-    margin-bottom: 1.5rem;
-    text-align: left;
-  }
-  
-  .form-group label {
-    display: block;
-    font-size: 0.9rem;
-    color: #121212;
-    margin-bottom: 0.5rem;
-  }
-  
-  .form-group input {
-    width: 100%;
-    padding: 0.8rem;
-    border: 1px solid #ddd;
-    border-radius: 8px;
-    font-size: 1rem;
-    color: #121212;
-  }
-  
-  .signup-button {
-    background: #8338EC;
-    color: #ffffff;
-    width: 100%;
-    padding: 0.8rem;
-    border: none;
-    border-radius: 8px;
-    font-size: 1rem;
-    cursor: pointer;
-    transition: background 0.3s ease;
-  }
-  
-  .signup-button:hover {
-    background: #9482fb;
-  }
-  
-  /* Sign-in link */
-  .signin-text {
-    margin-top: 1rem;
-    font-size: 0.9rem;
-    color: #666666;
-  }
-  
-  .signin-text a {
-    color: #8338EC;
-    text-decoration: none;
-    font-weight: bold;
-  }
-  
-  .signin-text a:hover {
-    text-decoration: underline;
-  }
-  
+}

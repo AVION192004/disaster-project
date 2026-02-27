@@ -1,41 +1,101 @@
 import React from "react";
 import "./HowItWorks.css";
 
+const steps = [
+  {
+    id: 1,
+    tag: "Ingestion",
+    title: "Image Upload",
+    description:
+      "Field officers or automated feeds submit satellite or drone imagery of the affected area directly through the platform.",
+    detail: "Supports JPEG, PNG, GeoTIFF — up to 50 MB",
+  },
+  {
+    id: 2,
+    tag: "Segmentation",
+    title: "Damage Segmentation",
+    description:
+      "An Attention U-Net model segments structurally damaged regions, distinguishing affected zones from undamaged surroundings at pixel level.",
+    detail: "Avg. processing time: 8.4 seconds",
+  },
+  {
+    id: 3,
+    tag: "Classification",
+    title: "Severity Classification",
+    description:
+      "A Fully Convolutional Neural Network scores damage across four severity tiers — Minor, Moderate, Severe, and Catastrophic.",
+    detail: "94.2% classification accuracy",
+  },
+  {
+    id: 4,
+    tag: "Dispatch",
+    title: "Resource Estimation",
+    description:
+      "The DQN allocation engine cross-references severity scores with available inventory to generate a ranked dispatch recommendation.",
+    detail: "Recommendations generated in under 2 seconds",
+  },
+];
+
 function HowItWorks() {
   return (
-    <section className="how-it-works">
-      <h2>How It Works</h2>
+    <section className="hiw-section" aria-labelledby="hiw-heading">
+      <div className="hiw-inner">
 
-      <div className="steps">
-        <div className="step">
-          <span>1</span>
-          <h4>Image Upload</h4>
-          <p>User uploads a disaster-affected image.</p>
-        </div>
-
-        <div className="step">
-          <span>2</span>
-          <h4>Damage Segmentation</h4>
-          <p>
-            Attention U-Net segments damaged regions from the image.
+        {/* Header */}
+        <header className="hiw-header">
+          <span className="hiw-eyebrow">Operational Workflow</span>
+          <h2 id="hiw-heading" className="hiw-title">
+            How It <span className="hiw-title__accent">Works</span>
+          </h2>
+          <p className="hiw-subtitle">
+            From image ingestion to field dispatch — the entire assessment
+            pipeline runs in under 15 seconds.
           </p>
+        </header>
+
+        {/* Steps */}
+        <ol className="hiw-steps" aria-label="Process steps">
+          {steps.map(({ id, tag, title, description, detail }, index) => (
+            <li key={id} className="hiw-step">
+
+              {/* Connector line (not rendered on last step) */}
+              {index < steps.length - 1 && (
+                <span className="hiw-step__connector" aria-hidden="true" />
+              )}
+
+              {/* Step number */}
+              <div className="hiw-step__number" aria-label={`Step ${id}`}>
+                <span aria-hidden="true">{id}</span>
+              </div>
+
+              {/* Content */}
+              <div className="hiw-step__content">
+                <span className="hiw-step__tag">{tag}</span>
+                <h3 className="hiw-step__title">{title}</h3>
+                <p className="hiw-step__description">{description}</p>
+                <span className="hiw-step__detail">
+                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true">
+                    <circle cx="12" cy="12" r="10"/>
+                    <polyline points="12 6 12 12 16 14"/>
+                  </svg>
+                  {detail}
+                </span>
+              </div>
+
+            </li>
+          ))}
+        </ol>
+
+        {/* Bottom CTA strip */}
+        <div className="hiw-cta-strip">
+          <p className="hiw-cta-strip__text">
+            Ready to see the pipeline in action?
+          </p>
+          <button className="hiw-cta-btn" type="button">
+            Request a Live Demo
+          </button>
         </div>
 
-        <div className="step">
-          <span>3</span>
-          <h4>Severity Classification</h4>
-          <p>
-            FCNN classifies damage into severity levels.
-          </p>
-        </div>
-
-        <div className="step">
-          <span>4</span>
-          <h4>Resource Estimation</h4>
-          <p>
-            System predicts required emergency resources.
-          </p>
-        </div>
       </div>
     </section>
   );

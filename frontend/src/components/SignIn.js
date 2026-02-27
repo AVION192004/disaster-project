@@ -1,59 +1,116 @@
 import React from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, Link } from "react-router-dom";
 import "./SignIn.css";
 
 function SignIn({ onSignIn }) {
   const navigate = useNavigate();
 
   const handleSignIn = (e) => {
-    e.preventDefault(); // Prevent page reload
-    onSignIn(); // Call the onSignIn function to mark the user as authenticated
-navigate("/officer/dashboard");
+    e.preventDefault();
+    onSignIn();
+    navigate("/officer/dashboard");
   };
 
   return (
-    <div className="signin-container">
-      <div className="signin-card">
-        <button className="back-button" onClick={() => window.history.back()}>
-          ← Back
-        </button>
-        <div className="signin-content">
-          <div className="signin-text-logo">Rescuevision</div> {/* Text-based logo */}
-          <h2>Login</h2>
-          <p>
-            Welcome back! <span role="img" aria-label="wave">👋</span> Login to get started!
-          </p>
-          <form className="signin-form" onSubmit={handleSignIn}>
-            <div className="form-group">
-              <label htmlFor="email">Email*</label>
-              <input
-                type="email"
-                id="email"
-                placeholder="Enter your email"
-                required
-              />
-            </div>
-            <div className="form-group">
-              <label htmlFor="password">Password*</label>
-              <input
-                type="password"
-                id="password"
-                placeholder="Min. 8 characters"
-                required
-              />
-              <div className="forgot-password">
-                <a href="/forgot-password">Forgot Password?</a>
-              </div>
-            </div>
-            <button type="submit" className="signin-button">
-              Login
-            </button>
-          </form>
-          <p className="signup-text">
-            Not registered yet? <a href="/signup">Create an Account</a>
-          </p>
+    <div className="signin-page">
+
+      {/* Left panel — branding */}
+      <div className="signin-brand" aria-hidden="true">
+        <div className="signin-brand__inner">
+          <div className="signin-brand__logo">
+            <span className="signin-brand__mark">RV</span>
+            <span className="signin-brand__name">RescueVision</span>
+          </div>
+          <blockquote className="signin-brand__quote">
+            "Coordinating disaster response across 12 state agencies — in real time."
+          </blockquote>
+          <div className="signin-brand__meta">
+            <span className="signin-brand__dot" />
+            All systems operational
+          </div>
         </div>
       </div>
+
+      {/* Right panel — form */}
+      <main className="signin-main">
+        <div className="signin-card">
+
+          {/* Back */}
+          <button
+            className="signin-back"
+            type="button"
+            onClick={() => window.history.back()}
+            aria-label="Go back"
+          >
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true">
+              <path d="M19 12H5M12 5l-7 7 7 7"/>
+            </svg>
+            Back
+          </button>
+
+          {/* Header */}
+          <header className="signin-header">
+            <h1 className="signin-title">Sign in to your account</h1>
+            <p className="signin-subtitle">
+              Enter your credentials to access the operations dashboard.
+            </p>
+          </header>
+
+          {/* Form */}
+          <form className="signin-form" onSubmit={handleSignIn} noValidate>
+
+            <div className="form-field">
+              <label className="form-label" htmlFor="email">
+                Email address
+              </label>
+              <input
+                className="form-input"
+                type="email"
+                id="email"
+                name="email"
+                placeholder="officer@agency.gov"
+                autoComplete="email"
+                required
+              />
+            </div>
+
+            <div className="form-field">
+              <div className="form-label-row">
+                <label className="form-label" htmlFor="password">
+                  Password
+                </label>
+                <a className="form-forgot" href="/forgot-password">
+                  Forgot password?
+                </a>
+              </div>
+              <input
+                className="form-input"
+                type="password"
+                id="password"
+                name="password"
+                placeholder="Min. 8 characters"
+                autoComplete="current-password"
+                required
+              />
+            </div>
+
+            <button className="signin-submit" type="submit">
+              Sign in
+            </button>
+
+          </form>
+
+          {/* Footer */}
+          <p className="signin-footer">
+            Don't have an account?{" "}
+            <Link to="/officer/register" className="signin-footer__link">
+              Create one
+            </Link>
+          </p>
+
+        </div>
+      </main>
+
     </div>
   );
 }

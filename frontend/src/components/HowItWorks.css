@@ -1,45 +1,276 @@
-.how-it-works {
-  padding: 80px 20px;
-  background: #0f0f0f;
-  color: #ffffff;
+/* ============================================================
+   HowItWorks — RescueVision Enterprise Design System
+   Tokens:
+     #0D1117  bg-primary
+     #161B27  bg-secondary
+     #1E2636  surface
+     #2A3347  border
+     #6B48FF  purple-primary
+     #5538E0  purple-hover
+     #F0F2F7  text-primary
+     #8B95A8  text-secondary
+     #56617A  text-tertiary
+   ============================================================ */
+
+/* ── Reset ───────────────────────────────────────────────── */
+.hiw-section *,
+.hiw-section *::before,
+.hiw-section *::after {
+  box-sizing: border-box;
+}
+
+/* ── Section ─────────────────────────────────────────────── */
+.hiw-section {
+  background: #161B27;
+  color: #F0F2F7;
+  padding: 6rem 2.5rem;
+  border-top: 1px solid #2A3347;
+  border-bottom: 1px solid #2A3347;
+}
+
+.hiw-inner {
+  max-width: 860px;
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  gap: 3.5rem;
+}
+
+/* ── Header ──────────────────────────────────────────────── */
+.hiw-header {
   text-align: center;
+  display: flex;
+  flex-direction: column;
+  gap: 0.875rem;
 }
 
-.how-it-works h2 {
-  font-size: 2.2rem;
-  margin-bottom: 40px;
+.hiw-eyebrow {
+  font-size: 0.75rem;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: #6B48FF;
 }
 
-.steps {
+.hiw-title {
+  font-size: clamp(1.875rem, 3vw, 2.5rem);
+  font-weight: 700;
+  line-height: 1.2;
+  letter-spacing: -0.02em;
+  color: #F0F2F7;
+  margin: 0;
+}
+
+.hiw-title__accent {
+  color: #6B48FF;
+}
+
+.hiw-subtitle {
+  font-size: 1rem;
+  line-height: 1.7;
+  color: #8B95A8;
+  margin: 0 auto;
+  max-width: 520px;
+}
+
+/* ── Steps list ──────────────────────────────────────────── */
+.hiw-steps {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0; /* gap is handled by the connector lines */
+}
+
+/* ── Individual step ─────────────────────────────────────── */
+.hiw-step {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-  gap: 30px;
-  max-width: 1000px;
-  margin: auto;
+  grid-template-columns: 40px 1fr;
+  column-gap: 1.5rem;
+  align-items: start;
+  position: relative;
 }
 
-.step {
-  background: #1c1c1c;
-  padding: 25px;
-  border-radius: 12px;
+/* Vertical connector line between steps */
+.hiw-step__connector {
+  position: absolute;
+  left: 19px; /* centers on the 40px number circle */
+  top: 40px;  /* starts below the circle */
+  width: 1px;
+  bottom: 0;
+  background: #2A3347;
+  display: block;
 }
 
-.step span {
-  display: inline-block;
+/* Step number circle */
+.hiw-step__number {
   width: 40px;
   height: 40px;
-  line-height: 40px;
   border-radius: 50%;
-  background: #8338ec;
-  margin-bottom: 10px;
-  font-weight: bold;
+  background: #1E2636;
+  border: 1px solid #2A3347;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.8125rem;
+  font-weight: 700;
+  color: #6B48FF;
+  flex-shrink: 0;
+  position: relative;
+  z-index: 1; /* sits above the connector line */
 }
 
-.step h4 {
-  margin: 10px 0;
+/* Step content */
+.hiw-step__content {
+  padding-bottom: 2.5rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  padding-top: 0.5rem; /* vertically aligns with circle center */
 }
 
-.step p {
-  color: #bdbdbd;
-  font-size: 0.95rem;
+/* Last step — no bottom padding (no connector below it) */
+.hiw-steps li:last-child .hiw-step__content {
+  padding-bottom: 0;
+}
+
+/* Tag */
+.hiw-step__tag {
+  font-size: 0.7rem;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: #56617A;
+  background: #1E2636;
+  border: 1px solid #2A3347;
+  padding: 0.175rem 0.5rem;
+  border-radius: 4px;
+  width: fit-content;
+}
+
+/* Title */
+.hiw-step__title {
+  font-size: 1.0625rem;
+  font-weight: 600;
+  color: #F0F2F7;
+  margin: 0;
+  line-height: 1.35;
+}
+
+/* Description */
+.hiw-step__description {
+  font-size: 0.9rem;
+  line-height: 1.7;
+  color: #8B95A8;
+  margin: 0;
+}
+
+/* Detail metric line */
+.hiw-step__detail {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.375rem;
+  font-size: 0.775rem;
+  color: #56617A;
+  font-weight: 500;
+  margin-top: 0.25rem;
+}
+
+.hiw-step__detail svg {
+  flex-shrink: 0;
+  color: #3D4A63;
+}
+
+/* ── Bottom CTA strip ────────────────────────────────────── */
+.hiw-cta-strip {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1.5rem;
+  padding: 1.25rem 1.5rem;
+  background: #1E2636;
+  border: 1px solid #2A3347;
+  border-radius: 8px;
+  flex-wrap: wrap;
+}
+
+.hiw-cta-strip__text {
+  font-size: 0.9375rem;
+  color: #8B95A8;
+  margin: 0;
+  font-weight: 500;
+}
+
+.hiw-cta-btn {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.5625rem 1.25rem;
+  font-size: 0.875rem;
+  font-weight: 600;
+  font-family: inherit;
+  color: #ffffff;
+  background: #6B48FF;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: background 0.15s ease, box-shadow 0.15s ease;
+  white-space: nowrap;
+}
+
+.hiw-cta-btn:hover {
+  background: #5538E0;
+  box-shadow: 0 2px 10px rgba(107, 72, 255, 0.22);
+}
+
+.hiw-cta-btn:active {
+  background: #4329C2;
+  box-shadow: none;
+}
+
+/* ── Responsive ──────────────────────────────────────────── */
+@media (max-width: 768px) {
+  .hiw-section {
+    padding: 4rem 1.5rem;
+  }
+
+  .hiw-inner {
+    gap: 2.5rem;
+  }
+
+  .hiw-step {
+    column-gap: 1rem;
+  }
+
+  .hiw-cta-strip {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 1rem;
+  }
+
+  .hiw-cta-btn {
+    width: 100%;
+    justify-content: center;
+  }
+}
+
+@media (max-width: 480px) {
+  .hiw-section {
+    padding: 3rem 1.25rem;
+  }
+
+  .hiw-step__number {
+    width: 34px;
+    height: 34px;
+    font-size: 0.75rem;
+  }
+
+  .hiw-step__connector {
+    left: 16px;
+    top: 34px;
+  }
+
+  .hiw-step__content {
+    padding-bottom: 2rem;
+  }
 }
