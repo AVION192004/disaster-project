@@ -1,0 +1,12 @@
+{
+  "dependencies": {
+    "leaflet-control-geocoder": "^3.3.1",
+    "lucide-react": "^0.563.0"
+  },
+  "devDependencies": {
+    "@babel/plugin-proposal-private-property-in-object": "^7.21.11",
+    "autoprefixer": "^10.4.23",
+    "postcss": "^8.5.6",
+    "tailwindcss": "^4.1.18"
+  }
+}
