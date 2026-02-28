@@ -1,7 +1,10 @@
 import React from 'react';
+import { useNavigate } from 'react-router-dom';
 import './HeroSection.css';
 
 const HeroSection = () => {
+  const navigate = useNavigate();
+
   return (
     <div className="hero-container">
 
@@ -35,24 +38,32 @@ const HeroSection = () => {
             </h1>
 
             <p className="hero-description">
-              RescueVision harnesses satellite imagery, AI triage, and real-time
-              coordination to assess disaster damage swiftly and allocate resources
-              where they matter most.
+              RescueVision uses ground-level image classification, AI triage, and
+              real-time coordination to assess building damage swiftly and allocate
+              rescue resources where they matter most.
             </p>
 
             <div className="hero-actions">
-              <button className="hero-btn hero-btn--primary" type="button">
-                Get Started
+              <button
+                className="hero-btn hero-btn--primary"
+                type="button"
+                onClick={() => navigate('/damage-assessment')}
+              >
+                Run Assessment
               </button>
-              <button className="hero-btn hero-btn--secondary" type="button">
+              <button
+                className="hero-btn hero-btn--secondary"
+                type="button"
+                onClick={() => navigate('/features')}
+              >
                 Learn More
               </button>
             </div>
 
             {/* Trust line */}
             <p className="hero-trust">
-              Trusted by emergency management agencies across&nbsp;
-              <strong>12&nbsp;states</strong>
+              Built with&nbsp;<strong>EfficientNet-B0</strong>&nbsp;·&nbsp;
+              <strong>98%+</strong>&nbsp;validation accuracy
             </p>
 
           </div>
@@ -97,8 +108,8 @@ const HeroSection = () => {
                     </svg>
                   }
                   title="Resource Allocation"
-                  description="Smart dispatch based on severity scoring"
-                  metric="87% efficiency"
+                  description="DQN-based smart dispatch by damage severity"
+                  metric="3 damage levels"
                 />
                 <PanelCard
                   icon={
@@ -107,8 +118,8 @@ const HeroSection = () => {
                     </svg>
                   }
                   title="AI Assessment"
-                  description="Damage scoring from satellite imagery"
-                  metric="±4.2% accuracy"
+                  description="EfficientNet-B0 ground-level damage classification"
+                  metric="98%+ accuracy"
                 />
                 <PanelCard
                   icon={
@@ -118,7 +129,7 @@ const HeroSection = () => {
                   }
                   title="Officer Network"
                   description="Coordinate rescue officers across regions"
-                  metric="312 officers online"
+                  metric="Secure login system"
                 />
               </div>
             </div>
@@ -130,13 +141,13 @@ const HeroSection = () => {
       {/* ── Statistics Bar ────────────────────────────────── */}
       <section className="stats-bar" aria-label="Platform statistics">
         <div className="stats-bar__inner">
-          <StatItem number="500+" label="Disasters Managed" />
+          <StatItem number="3"     label="Damage Classes" />
           <span className="stats-bar__divider" aria-hidden="true" />
-          <StatItem number="10,000+" label="Lives Protected" />
+          <StatItem number="4,373" label="Training Images" />
           <span className="stats-bar__divider" aria-hidden="true" />
-          <StatItem number="50+" label="Rescue Teams" />
+          <StatItem number="98%+"  label="Val Accuracy" />
           <span className="stats-bar__divider" aria-hidden="true" />
-          <StatItem number="99.9%" label="Platform Uptime" />
+          <StatItem number="<2s"   label="Inference Time" />
         </div>
       </section>
 

@@ -13,11 +13,12 @@ function Header() {
   }, []);
 
   const navItems = [
-    { to: '/', label: 'Home' },
-    { to: '/report-disaster', label: 'Report Disaster' },
-    { to: '/features', label: 'Features' },
-    { to: '/first-aid', label: 'First Aid' },
-    { to: '/dashboard', label: 'Dashboard' },
+    { to: '/',                   label: 'Home'              },
+    { to: '/report-disaster',    label: 'Report Disaster'   },
+    { to: '/damage-assessment',  label: 'Damage Assessment' },
+    { to: '/features',           label: 'Features'          },
+    { to: '/first-aid',          label: 'First Aid'         },
+    { to: '/officer/dashboard',  label: 'Dashboard'         },
   ];
 
   return (

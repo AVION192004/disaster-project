@@ -94,53 +94,313 @@ export default function ReportDisaster() {
     setSelectedFiles([]);
   };
 
-  const styles = {
-    container: { minHeight: '100vh', background: 'linear-gradient(135deg, #1a1a2e 0%, #581c87 50%, #1a1a2e 100%)', color: 'white', fontFamily: 'Arial, sans-serif' },
-    header: { background: 'rgba(0,0,0,0.5)', borderBottom: '1px solid rgba(255,255,255,0.1)', padding: '1rem 2rem' },
-    headerContent: { maxWidth: '1200px', margin: '0 auto', display: 'flex', justifyContent: 'space-between', alignItems: 'center' },
-    backBtn: { background: 'none', border: 'none', color: '#d1d5db', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '0.5rem', fontSize: '0.9rem' },
-    logo: { fontSize: '1.5rem', fontWeight: 'bold' },
-    content: { maxWidth: '900px', margin: '0 auto', padding: '3rem 1.5rem' },
-    pageHeader: { textAlign: 'center', marginBottom: '2rem' },
-    iconContainer: { width: '64px', height: '64px', background: '#dc2626', borderRadius: '50%', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', marginBottom: '1rem' },
-    title: { fontSize: '2.5rem', fontWeight: 'bold', marginBottom: '0.5rem', background: 'linear-gradient(to right, #fff, #e879f9)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' },
-    subtitle: { color: '#d1d5db', fontSize: '1.1rem' },
-    formContainer: { background: 'rgba(31,41,55,0.5)', backdropFilter: 'blur(10px)', borderRadius: '1rem', padding: '2rem', border: '1px solid #374151', boxShadow: '0 10px 40px rgba(220,38,38,0.1)' },
-    errorBanner: { background: '#ff5252', color: 'white', padding: '1rem', borderRadius: '0.5rem', marginBottom: '1.5rem', display: 'flex', alignItems: 'center', gap: '0.5rem' },
-    section: { marginBottom: '2rem' },
-    sectionHeader: { fontSize: '1.5rem', fontWeight: 'bold', marginBottom: '1rem', display: 'flex', alignItems: 'center', gap: '0.5rem' },
-    grid: { display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))', gap: '1.5rem' },
-    gridFull: { gridColumn: '1 / -1' },
-    label: { display: 'block', fontSize: '0.875rem', fontWeight: '500', marginBottom: '0.5rem', color: '#e5e7eb' },
-    required: { color: '#f87171' },
-    input: { width: '100%', background: '#374151', border: '1px solid #4b5563', borderRadius: '0.5rem', padding: '0.75rem 1rem', color: 'white', fontSize: '1rem', boxSizing: 'border-box' },
-    inputWithIcon: { paddingLeft: '2.75rem' },
-    inputIcon: { position: 'absolute', left: '0.75rem', top: '50%', transform: 'translateY(-50%)', color: '#9ca3af' },
-    inputContainer: { position: 'relative' },
-    textarea: { width: '100%', background: '#374151', border: '1px solid #4b5563', borderRadius: '0.5rem', padding: '0.75rem 1rem', color: 'white', fontSize: '1rem', resize: 'none', minHeight: '100px', boxSizing: 'border-box' },
-    uploadArea: { display: 'flex', alignItems: 'center', justifyContent: 'center', width: '100%', height: '8rem', background: '#374151', border: '2px dashed #4b5563', borderRadius: '0.5rem', cursor: 'pointer', transition: 'all 0.2s' },
-    uploadContent: { textAlign: 'center' },
-    uploadText: { fontSize: '0.875rem', color: '#e5e7eb', marginTop: '0.5rem' },
-    uploadSubtext: { fontSize: '0.75rem', color: '#9ca3af', marginTop: '0.25rem' },
-    fileGrid: { marginTop: '1rem', display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(120px, 1fr))', gap: '1rem' },
-    fileItem: { position: 'relative', background: '#374151', borderRadius: '0.5rem', padding: '0.5rem' },
-    fileImage: { width: '100%', height: '6rem', objectFit: 'cover', borderRadius: '0.25rem' },
-    removeBtn: { position: 'absolute', top: '-0.5rem', right: '-0.5rem', width: '1.5rem', height: '1.5rem', background: '#dc2626', color: 'white', border: 'none', borderRadius: '50%', cursor: 'pointer', fontSize: '1.25rem', lineHeight: '1' },
-    fileName: { fontSize: '0.75rem', color: '#9ca3af', marginTop: '0.25rem', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' },
-    warning: { background: 'rgba(113,63,18,0.3)', border: '1px solid #d97706', borderRadius: '0.5rem', padding: '1rem', marginBottom: '1.5rem' },
-    warningText: { fontSize: '0.875rem', color: '#fcd34d' },
-    submitBtn: { width: '100%', background: 'linear-gradient(to right, #dc2626, #ea580c)', color: 'white', padding: '1rem', borderRadius: '0.5rem', border: 'none', fontWeight: 'bold', fontSize: '1.125rem', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem', transition: 'all 0.2s' },
-    submitBtnDisabled: { background: '#4b5563', cursor: 'not-allowed' },
-    spinner: { width: '1.25rem', height: '1.25rem', border: '2px solid white', borderTopColor: 'transparent', borderRadius: '50%', animation: 'spin 1s linear infinite' },
-    modal: { position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, background: 'linear-gradient(135deg, #1a1a2e 0%, #581c87 50%, #1a1a2e 100%)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '1.5rem', zIndex: 1000 },
-    modalCard: { background: '#1f2937', borderRadius: '1rem', padding: '2rem', maxWidth: '28rem', width: '100%', textAlign: 'center', border: '1px solid #10b981', boxShadow: '0 20px 60px rgba(16,185,129,0.3)' },
-    modalTitle: { fontSize: '1.875rem', fontWeight: 'bold', margin: '1rem 0' },
-    modalMessage: { color: '#d1d5db', marginBottom: '1.5rem' },
-    reportIdBox: { background: '#374151', borderRadius: '0.5rem', padding: '1rem', marginBottom: '1.5rem' },
-    reportIdLabel: { fontSize: '0.875rem', color: '#9ca3af' },
-    reportIdValue: { fontSize: '1.5rem', fontWeight: 'bold', color: '#a78bfa', marginTop: '0.25rem' },
-    newReportBtn: { width: '100%', background: '#9333ea', color: 'white', padding: '0.75rem', borderRadius: '0.5rem', border: 'none', fontWeight: '600', cursor: 'pointer' }
-  };
+ const styles = {
+
+  /* 🔥 Dark Navy Base Instead of Purple Gradient */
+  container: {
+    minHeight: '100vh',
+    background: '#0f172a',
+    color: 'white',
+    fontFamily: 'Arial, sans-serif'
+  },
+
+  header: {
+    background: '#111827',
+    borderBottom: '1px solid #1f2937',
+    padding: '1rem 2rem'
+  },
+
+  headerContent: {
+    maxWidth: '1200px',
+    margin: '0 auto',
+    display: 'flex',
+    justifyContent: 'space-between',
+    alignItems: 'center'
+  },
+
+  backBtn: {
+    background: 'none',
+    border: 'none',
+    color: '#9ca3af',
+    cursor: 'pointer',
+    display: 'flex',
+    alignItems: 'center',
+    gap: '0.5rem',
+    fontSize: '0.9rem'
+  },
+
+  logo: { fontSize: '1.5rem', fontWeight: 'bold' },
+
+  content: { maxWidth: '900px', margin: '0 auto', padding: '3rem 1.5rem' },
+
+  pageHeader: { textAlign: 'center', marginBottom: '2rem' },
+
+  iconContainer: {
+    width: '64px',
+    height: '64px',
+    background: '#dc2626',
+    borderRadius: '50%',
+    display: 'inline-flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: '1rem'
+  },
+
+  /* 🔥 Removed purple gradient text */
+  title: {
+    fontSize: '2.5rem',
+    fontWeight: 'bold',
+    marginBottom: '0.5rem',
+    color: 'white'
+  },
+
+  subtitle: { color: '#9ca3af', fontSize: '1.1rem' },
+
+  formContainer: {
+    background: '#1e293b',
+    borderRadius: '1rem',
+    padding: '2rem',
+    border: '1px solid #334155'
+  },
+
+  errorBanner: {
+    background: '#dc2626',
+    color: 'white',
+    padding: '1rem',
+    borderRadius: '0.5rem',
+    marginBottom: '1.5rem',
+    display: 'flex',
+    alignItems: 'center',
+    gap: '0.5rem'
+  },
+
+  section: { marginBottom: '2rem' },
+
+  sectionHeader: {
+    fontSize: '1.5rem',
+    fontWeight: 'bold',
+    marginBottom: '1rem',
+    display: 'flex',
+    alignItems: 'center',
+    gap: '0.5rem'
+  },
+
+  grid: {
+    display: 'grid',
+    gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))',
+    gap: '1.5rem'
+  },
+
+  gridFull: { gridColumn: '1 / -1' },
+
+  label: {
+    display: 'block',
+    fontSize: '0.875rem',
+    fontWeight: '500',
+    marginBottom: '0.5rem',
+    color: '#e5e7eb'
+  },
+
+  required: { color: '#f87171' },
+
+  input: {
+    width: '100%',
+    background: '#0f172a',
+    border: '1px solid #334155',
+    borderRadius: '0.5rem',
+    padding: '0.75rem 1rem',
+    color: 'white',
+    fontSize: '1rem',
+    boxSizing: 'border-box'
+  },
+
+  inputWithIcon: { paddingLeft: '2.75rem' },
+
+  inputIcon: {
+    position: 'absolute',
+    left: '0.75rem',
+    top: '50%',
+    transform: 'translateY(-50%)',
+    color: '#6b7280'
+  },
+
+  inputContainer: { position: 'relative' },
+
+  textarea: {
+    width: '100%',
+    background: '#0f172a',
+    border: '1px solid #334155',
+    borderRadius: '0.5rem',
+    padding: '0.75rem 1rem',
+    color: 'white',
+    fontSize: '1rem',
+    resize: 'none',
+    minHeight: '100px',
+    boxSizing: 'border-box'
+  },
+
+  uploadArea: {
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    width: '100%',
+    height: '8rem',
+    background: '#0f172a',
+    border: '2px dashed #334155',
+    borderRadius: '0.5rem',
+    cursor: 'pointer'
+  },
+
+  uploadContent: { textAlign: 'center' },
+
+  uploadText: { fontSize: '0.875rem', color: '#e5e7eb', marginTop: '0.5rem' },
+
+  uploadSubtext: { fontSize: '0.75rem', color: '#6b7280', marginTop: '0.25rem' },
+
+  fileGrid: {
+    marginTop: '1rem',
+    display: 'grid',
+    gridTemplateColumns: 'repeat(auto-fill, minmax(120px, 1fr))',
+    gap: '1rem'
+  },
+
+  fileItem: {
+    position: 'relative',
+    background: '#1e293b',
+    borderRadius: '0.5rem',
+    padding: '0.5rem'
+  },
+
+  fileImage: {
+    width: '100%',
+    height: '6rem',
+    objectFit: 'cover',
+    borderRadius: '0.25rem'
+  },
+
+  removeBtn: {
+    position: 'absolute',
+    top: '-0.5rem',
+    right: '-0.5rem',
+    width: '1.5rem',
+    height: '1.5rem',
+    background: '#dc2626',
+    color: 'white',
+    border: 'none',
+    borderRadius: '50%',
+    cursor: 'pointer',
+    fontSize: '1.25rem',
+    lineHeight: '1'
+  },
+
+  fileName: {
+    fontSize: '0.75rem',
+    color: '#9ca3af',
+    marginTop: '0.25rem',
+    overflow: 'hidden',
+    textOverflow: 'ellipsis',
+    whiteSpace: 'nowrap'
+  },
+
+  warning: {
+    background: '#3f1d1d',
+    border: '1px solid #7f1d1d',
+    borderRadius: '0.5rem',
+    padding: '1rem',
+    marginBottom: '1.5rem'
+  },
+
+  warningText: {
+    fontSize: '0.875rem',
+    color: '#fca5a5'
+  },
+
+  /* 🔥 Removed red-orange gradient */
+  submitBtn: {
+    width: '100%',
+    background: '#dc2626',
+    color: 'white',
+    padding: '1rem',
+    borderRadius: '0.5rem',
+    border: 'none',
+    fontWeight: 'bold',
+    fontSize: '1.125rem',
+    cursor: 'pointer',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: '0.5rem'
+  },
+
+  submitBtnDisabled: { background: '#475569', cursor: 'not-allowed' },
+
+  spinner: {
+    width: '1.25rem',
+    height: '1.25rem',
+    border: '2px solid white',
+    borderTopColor: 'transparent',
+    borderRadius: '50%',
+    animation: 'spin 1s linear infinite'
+  },
+
+  /* 🔥 Modal without purple */
+  modal: {
+    position: 'fixed',
+    inset: 0,
+    background: '#0f172a',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    padding: '1.5rem',
+    zIndex: 1000
+  },
+
+  modalCard: {
+    background: '#1e293b',
+    borderRadius: '1rem',
+    padding: '2rem',
+    maxWidth: '28rem',
+    width: '100%',
+    textAlign: 'center',
+    border: '1px solid #10b981'
+  },
+
+  modalTitle: {
+    fontSize: '1.875rem',
+    fontWeight: 'bold',
+    margin: '1rem 0'
+  },
+
+  modalMessage: { color: '#9ca3af', marginBottom: '1.5rem' },
+
+  reportIdBox: {
+    background: '#0f172a',
+    borderRadius: '0.5rem',
+    padding: '1rem',
+    marginBottom: '1.5rem'
+  },
+
+  reportIdLabel: { fontSize: '0.875rem', color: '#6b7280' },
+
+  /* 🔥 Blue accent instead of purple */
+  reportIdValue: {
+    fontSize: '1.5rem',
+    fontWeight: 'bold',
+    color: '#60a5fa',
+    marginTop: '0.25rem'
+  },
+
+  newReportBtn: {
+    width: '100%',
+    background: '#2563eb',
+    color: 'white',
+    padding: '0.75rem',
+    borderRadius: '0.5rem',
+    border: 'none',
+    fontWeight: '600',
+    cursor: 'pointer'
+  }
+};
 
   if (submitted) {
     return (

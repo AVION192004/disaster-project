@@ -6,6 +6,8 @@ import jwt
 from datetime import datetime, timedelta
 import os
 import random
+import uuid
+from inference_damage import DamageAssessor
 
 app = Flask(__name__)
 
@@ -26,6 +28,11 @@ app.config['SECRET_KEY'] = 'your-secret-key-change-this-in-production'
 
 DB_PATH = 'Rescuevision.db'
 RESOURCE_DB_PATH = 'rescueplex.db'
+UPLOAD_FOLDER = 'uploads'
+os.makedirs(UPLOAD_FOLDER, exist_ok=True)
+
+# Load damage assessment model once at startup
+damage_assessor = DamageAssessor('best_model.pth')
 
 # ─── Database init ────────────────────────────────────────────────────────────
 
@@ -502,23 +509,69 @@ def allocate_resources():
         return jsonify({'success': False, 'error': 'Server error'}), 500
 
 
+# ─── Damage Assessment endpoint ───────────────────────────────────────────────
+
+@app.route('/api/damage/assess', methods=['POST'])
+def assess_damage():
+    try:
+        if 'image' not in request.files:
+            return jsonify({'success': False, 'error': 'No image file provided'}), 400
+
+        file = request.files['image']
+
+        if file.filename == '':
+            return jsonify({'success': False, 'error': 'No file selected'}), 400
+
+        allowed = {'png', 'jpg', 'jpeg', 'webp'}
+        ext = file.filename.rsplit('.', 1)[-1].lower()
+        if ext not in allowed:
+            return jsonify({'success': False, 'error': 'Invalid file type. Use JPG, PNG or WEBP'}), 400
+
+        # Save temporarily
+        unique_name = f"{uuid.uuid4().hex}.{ext}"
+        save_path = os.path.join(UPLOAD_FOLDER, unique_name)
+        file.save(save_path)
+
+        try:
+            result = damage_assessor.predict(save_path)
+        finally:
+            if os.path.exists(save_path):
+                os.remove(save_path)
+
+        return jsonify({
+            'success':             True,
+            'predicted_label':     result['predicted_label'],
+            'damage_level':        result['damage_level'],
+            'confidence':          result['confidence'],
+            'color':               result['color'],
+            'all_probabilities':   result['all_probabilities'],
+            'gradcam_heatmap_b64': result['gradcam_heatmap_b64'],
+        }), 200
+
+    except Exception as e:
+        print(f"Damage assessment error: {str(e)}")
+        return jsonify({'success': False, 'error': 'Assessment failed. Please try again.'}), 500
+
+
+# ─── Health check ─────────────────────────────────────────────────────────────
+
 @app.route('/api/health', methods=['GET'])
 def health():
     return jsonify({
-        'status':    'healthy',
-        'timestamp': datetime.now().isoformat(),
-        'db':        'connected' if os.path.exists(DB_PATH) else 'not found',
+        'status':      'healthy',
+        'timestamp':   datetime.now().isoformat(),
+        'db':          'connected' if os.path.exists(DB_PATH) else 'not found',
         'resource_db': 'connected' if os.path.exists(RESOURCE_DB_PATH) else 'not found',
     }), 200
 
 
 if __name__ == '__main__':
     print("=" * 50)
-    print("🚀 Rescuevision Officer Login Backend")
+    print("Rescuevision Officer Login Backend")
     print("=" * 50)
     print("Starting server on http://localhost:5000")
     print("\nDemo Credentials:")
     print("  Email: officer1@rescue.com")
     print("  Password: rescue123")
     print("=" * 50)
-    app.run(debug=True, host='localhost', port=5000, use_reloader=True)
+    app.run(debug=True, host='localhost', port=5000, use_reloader=False)

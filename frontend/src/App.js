@@ -17,37 +17,85 @@ import OfficerLogin from "./pages/OfficerLogin";
 import OfficerDashboard from "./pages/OfficerDashboard";
 import AdminDisaster from "./pages/AdminDisaster";
 
+// Reusable dark page wrapper — fixes white gap on all pages
+const darkPage = {
+  backgroundColor: '#0D1117',
+  minHeight: '100vh',
+  paddingTop: '20px',
+};
+
 function App() {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
 
   return (
     <Router>
-      <div className="App">
+      {/* Dark background covers entire app — no more white gaps */}
+      <div className="App" style={{ backgroundColor: '#0D1117', minHeight: '100vh' }}>
         <Header />
         <Routes>
-          {/* Home Page Route - Updated with new sections */}
+
+          {/* Home Page — clean, just hero + how it works */}
           <Route
             path="/"
             element={
               <>
                 <HeroSection />
                 <HowItWorks />
-                <ReportDisaster />
-                <DamageAssessment />
               </>
             }
           />
-          
-          {/* Individual Page Routes */}
-          <Route path="/damage-assessment" element={<DamageAssessment />} />
-          <Route path="/features" element={<Features />} />
-          <Route path="/signup" element={<SignUp />} />
-          <Route path="/first-aid" element={<FirstAid />} />
 
+          {/* Damage Assessment — full dark page */}
+          <Route
+            path="/damage-assessment"
+            element={
+              <div style={{ ...darkPage, padding: '40px 20px' }}>
+                <DamageAssessment />
+              </div>
+            }
+          />
+
+          {/* Report Disaster — its own dedicated page */}
+          <Route
+            path="/report-disaster"
+            element={
+              <div style={darkPage}>
+                <ReportDisaster />
+              </div>
+            }
+          />
+
+          {/* Features */}
+          <Route
+            path="/features"
+            element={
+              <div style={darkPage}>
+                <Features />
+              </div>
+            }
+          />
+
+          {/* First Aid */}
+          <Route
+            path="/first-aid"
+            element={
+              <div style={darkPage}>
+                <FirstAid />
+              </div>
+            }
+          />
+
+          {/* Auth pages */}
+          <Route path="/signup" element={<div style={darkPage}><SignUp /></div>} />
           <Route
             path="/signIn"
-            element={<SignIn onSignIn={() => setIsAuthenticated(true)} />}
+            element={
+              <div style={darkPage}>
+                <SignIn onSignIn={() => setIsAuthenticated(true)} />
+              </div>
+            }
           />
+
           <Route
             path="/dashboard"
             element={
@@ -58,12 +106,13 @@ function App() {
           />
 
           {/* Officer Routes */}
-          <Route path="/officer/register" element={<OfficerRegister />} />
-          <Route path="/officer/login" element={<OfficerLogin />} />
+          <Route path="/officer/register" element={<div style={darkPage}><OfficerRegister /></div>} />
+          <Route path="/officer/login"    element={<div style={darkPage}><OfficerLogin /></div>} />
           <Route path="/officer/dashboard" element={<OfficerDashboard />} />
 
           {/* Admin Routes */}
           <Route path="/admin/disaster" element={<AdminDisaster />} />
+
         </Routes>
       </div>
     </Router>

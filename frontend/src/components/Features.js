@@ -115,15 +115,19 @@ const Features = () => {
 
         {/* Bottom compliance strip */}
         <div className="features-compliance" aria-label="Compliance certifications">
-          <ComplianceBadge label="SOC 2 Type II" />
+          <ComplianceBadge label="Secure Authentication
+" />
           <span className="features-compliance__divider" aria-hidden="true" />
-          <ComplianceBadge label="FedRAMP Ready" />
+          <ComplianceBadge label="Encrypted Data Transmission (HTTPS)
+" />
           <span className="features-compliance__divider" aria-hidden="true" />
-          <ComplianceBadge label="GDPR Compliant" />
+          <ComplianceBadge label="Role-Based Access Control
+" />
           <span className="features-compliance__divider" aria-hidden="true" />
-          <ComplianceBadge label="256-bit Encryption" />
+          <ComplianceBadge label="Cloud Deployment Ready
+" />
           <span className="features-compliance__divider" aria-hidden="true" />
-          <ComplianceBadge label="99.9% Uptime SLA" />
+          <ComplianceBadge label="AI-Powered Decision Support" />
         </div>
 
       </div>

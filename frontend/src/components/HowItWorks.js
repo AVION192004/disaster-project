@@ -7,31 +7,31 @@ const steps = [
     tag: "Ingestion",
     title: "Image Upload",
     description:
-      "Field officers or automated feeds submit satellite or drone imagery of the affected area directly through the platform.",
-    detail: "Supports JPEG, PNG, GeoTIFF — up to 50 MB",
+      "Field officers upload ground-level or smartphone imagery of the affected area directly through the platform for immediate AI analysis.",
+    detail: "Supports JPEG, PNG, WEBP — up to 10 MB",
   },
   {
     id: 2,
-    tag: "Segmentation",
-    title: "Damage Segmentation",
+    tag: "Classification",
+    title: "AI Damage Classification",
     description:
-      "An Attention U-Net model segments structurally damaged regions, distinguishing affected zones from undamaged surroundings at pixel level.",
-    detail: "Avg. processing time: 8.4 seconds",
+      "An EfficientNet-B0 deep learning model classifies the uploaded image into one of three damage levels — No Damage, Major Damage, or Destroyed — using transfer learning trained on real disaster imagery.",
+    detail: "Avg. processing time: under 2 seconds",
   },
   {
     id: 3,
-    tag: "Classification",
-    title: "Severity Classification",
+    tag: "Assessment",
+    title: "Confidence Scoring",
     description:
-      "A Fully Convolutional Neural Network scores damage across four severity tiers — Minor, Moderate, Severe, and Catastrophic.",
-    detail: "94.2% classification accuracy",
+      "The model returns a confidence percentage alongside the predicted damage label, giving officers a clear measure of prediction reliability before acting on the result.",
+    detail: "98%+ validation accuracy on test dataset",
   },
   {
     id: 4,
     tag: "Dispatch",
-    title: "Resource Estimation",
+    title: "Resource Allocation",
     description:
-      "The DQN allocation engine cross-references severity scores with available inventory to generate a ranked dispatch recommendation.",
+      "The DQN-based allocation engine cross-references the damage severity with available inventory to generate a ranked dispatch recommendation for personnel, vehicles, and supplies.",
     detail: "Recommendations generated in under 2 seconds",
   },
 ];
@@ -48,7 +48,7 @@ function HowItWorks() {
             How It <span className="hiw-title__accent">Works</span>
           </h2>
           <p className="hiw-subtitle">
-            From image ingestion to field dispatch — the entire assessment
+            From image upload to field dispatch — the entire assessment
             pipeline runs in under 15 seconds.
           </p>
         </header>
@@ -91,9 +91,11 @@ function HowItWorks() {
           <p className="hiw-cta-strip__text">
             Ready to see the pipeline in action?
           </p>
-          <button className="hiw-cta-btn" type="button">
-            Request a Live Demo
-          </button>
+          <a href="/damage-assessment">
+            <button className="hiw-cta-btn" type="button">
+              Try Damage Assessment
+            </button>
+          </a>
         </div>
 
       </div>
