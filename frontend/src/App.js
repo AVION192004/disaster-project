@@ -12,10 +12,14 @@ import Dashboard from "./components/Dashboard";
 import ProtectedRoute from "./components/ProtectedRoute";
 import ReportDisaster from "./components/ReportDisaster";
 import FirstAid from "./components/FirstAid";
+import SOSEmergency from "./components/SOSEmergency"; // ✅ NEW IMPORT
 import OfficerRegister from "./pages/OfficerRegister";
 import OfficerLogin from "./pages/OfficerLogin";
 import OfficerDashboard from "./pages/OfficerDashboard";
 import AdminDisaster from "./pages/AdminDisaster";
+import ShelterFinder from "./components/ShelterFinder";
+import ReliefBot from "./components/ReliefBot";
+
 
 // Reusable dark page wrapper — fixes white gap on all pages
 const darkPage = {
@@ -33,8 +37,12 @@ function App() {
       <div className="App" style={{ backgroundColor: '#0D1117', minHeight: '100vh' }}>
         <Header />
         <Routes>
+<<<<<<< HEAD
 
           {/* Home Page — clean, just hero + how it works */}
+=======
+          {/* Home Page Route */}
+>>>>>>> 3a32cc1b (Save current work)
           <Route
             path="/"
             element={
@@ -44,6 +52,7 @@ function App() {
               </>
             }
           />
+<<<<<<< HEAD
 
           {/* Damage Assessment — full dark page */}
           <Route
@@ -87,6 +96,23 @@ function App() {
 
           {/* Auth pages */}
           <Route path="/signup" element={<div style={darkPage}><SignUp /></div>} />
+=======
+          <Route path="/report-disaster" element={<ReportDisaster />} />
+          
+          {/* Individual Page Routes */}
+          <Route path="/damage-assessment" element={<DamageAssessment />} />
+          <Route path="/features" element={<Features />} />
+          <Route path="/signup" element={<SignUp />} />
+          <Route path="/first-aid" element={<FirstAid />} />
+
+          <Route path="/shelters" element={<ShelterFinder />} />
+
+          <Route path="/relief-bot" element={<ReliefBot />} />
+          
+          {/* ✅ NEW: SOS Emergency Route */}
+          <Route path="/sos" element={<SOSEmergency />} />
+
+>>>>>>> 3a32cc1b (Save current work)
           <Route
             path="/signIn"
             element={
