@@ -45,7 +45,7 @@ damage_assessor = DamageAssessor('best_model.pth')
 load_dotenv()  # Load from .env file
 
 # DIRECT FIX - Hardcode for now
-GROQ_API_KEY = ""
+GROQ_API_KEY = "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"
 
 print(f"DEBUG: GROQ_API_KEY = {GROQ_API_KEY[:20]}...")  # Should print first 20 chars
 
