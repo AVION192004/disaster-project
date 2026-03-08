@@ -24,7 +24,7 @@ const OfficerLogin = () => {
     setLoading(true);
 
     try {
-      const response = await fetch('http://127.0.0.1:5000/api/officer/login', {
+      const response = await fetch('http://localhost:5000/api/officer/login', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -43,7 +43,7 @@ const OfficerLogin = () => {
       }
     } catch (err) {
       console.error('Login error:', err);
-      setError('Network error. Please try again.');
+      setError('Network error. Please check if backend is running on http://localhost:5000');
     } finally {
       setLoading(false);
     }
@@ -109,8 +109,8 @@ const OfficerLogin = () => {
           <p>
             <strong>Demo Login:</strong>
           </p>
-          <p> officer1@rescue.com</p>
-          <p> rescue123</p>
+          <p>Email: officer1@rescue.com</p>
+          <p>Password: rescue123</p>
         </div>
       </div>
     </div>

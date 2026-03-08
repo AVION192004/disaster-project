@@ -1,0 +1,14 @@
+names:
+- Earthquake
+- Forest Fire
+- Hurricane
+nc: 3
+roboflow:
+  license: CC BY 4.0
+  project: natural-disaster-damage
+  url: https://universe.roboflow.com/model-1-jwssw/natural-disaster-damage/dataset/1
+  version: 1
+  workspace: model-1-jwssw
+test: ../test/images
+train: ../train/images
+val: ../valid/images

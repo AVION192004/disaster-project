@@ -210,3 +210,264 @@
     font-size: 0.75rem;
   }
 }
+/* Add these styles to your Header.css file */
+
+/* ===========================
+   SOS EMERGENCY BUTTON STYLES
+   =========================== */
+
+.header__action-link--sos {
+  margin-right: 1rem;
+}
+
+.btn--emergency {
+  background: linear-gradient(135deg, #dc2626 0%, #b91c1c 100%);
+  color: white;
+  border: 2px solid #ef4444;
+  padding: 0.75rem 1.5rem;
+  font-size: 0.95rem;
+  font-weight: 700;
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  box-shadow: 0 4px 15px rgba(220, 38, 38, 0.4);
+  position: relative;
+  overflow: hidden;
+  animation: pulse-glow 2s ease-in-out infinite;
+}
+
+.btn--emergency:hover {
+  background: linear-gradient(135deg, #b91c1c 0%, #991b1b 100%);
+  transform: translateY(-2px);
+  box-shadow: 0 6px 25px rgba(220, 38, 38, 0.6);
+}
+
+.btn--emergency:active {
+  transform: translateY(0);
+  box-shadow: 0 2px 10px rgba(220, 38, 38, 0.4);
+}
+
+/* Pulsing glow animation */
+@keyframes pulse-glow {
+  0%, 100% {
+    box-shadow: 0 4px 15px rgba(220, 38, 38, 0.4);
+  }
+  50% {
+    box-shadow: 0 4px 25px rgba(220, 38, 38, 0.7);
+  }
+}
+
+/* Shimmer effect on hover */
+.btn--emergency::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(
+    90deg,
+    transparent,
+    rgba(255, 255, 255, 0.3),
+    transparent
+  );
+  transition: left 0.5s;
+}
+
+.btn--emergency:hover::before {
+  left: 100%;
+}
+
+/* Mobile responsive adjustments */
+@media (max-width: 768px) {
+  .btn--emergency {
+    padding: 0.6rem 1rem;
+    font-size: 0.85rem;
+  }
+  
+  .header__action-link--sos {
+    margin-right: 0.5rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .btn--emergency {
+    padding: 0.5rem 0.75rem;
+    font-size: 0.75rem;
+  }
+  
+  /* Stack buttons vertically on very small screens */
+  .header__actions {
+    flex-wrap: wrap;
+    gap: 0.5rem;
+  }
+}
+
+/* Alternative: If you want a more subtle style, use this instead */
+.btn--emergency-subtle {
+  background: transparent;
+  color: #ef4444;
+  border: 2px solid #ef4444;
+  padding: 0.75rem 1.5rem;
+  font-size: 0.95rem;
+  font-weight: 700;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.btn--emergency-subtle:hover {
+  background: #dc2626;
+  color: white;
+  border-color: #dc2626;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 15px rgba(220, 38, 38, 0.4);
+}
+
+/* Alternative: Badge style with notification dot */
+.btn--emergency-badge {
+  position: relative;
+  background: linear-gradient(135deg, #dc2626 0%, #b91c1c 100%);
+  color: white;
+  border: 2px solid #ef4444;
+  padding: 0.75rem 1.5rem;
+  font-size: 0.95rem;
+  font-weight: 700;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.btn--emergency-badge::after {
+  content: '';
+  position: absolute;
+  top: -5px;
+  right: -5px;
+  width: 12px;
+  height: 12px;
+  background: #ef4444;
+  border: 2px solid white;
+  border-radius: 50%;
+  animation: pulse-dot 1.5s ease-in-out infinite;
+}
+
+@keyframes pulse-dot {
+  0%, 100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+  50% {
+    transform: scale(1.2);
+    opacity: 0.8;
+  }
+}
+
+/* Dark mode support */
+@media (prefers-color-scheme: dark) {
+  .btn--emergency {
+    border-color: #dc2626;
+    box-shadow: 0 4px 15px rgba(220, 38, 38, 0.5);
+  }
+  
+  .btn--emergency:hover {
+    box-shadow: 0 6px 25px rgba(220, 38, 38, 0.7);
+  }
+}
+
+/* Accessibility: Focus states */
+.btn--emergency:focus {
+  outline: 3px solid #fca5a5;
+  outline-offset: 2px;
+}
+
+.btn--emergency:focus:not(:focus-visible) {
+  outline: none;
+}
+
+.btn--emergency:focus-visible {
+  outline: 3px solid #fca5a5;
+  outline-offset: 2px;
+}
+/* ===========================
+   SOS EMERGENCY BUTTON
+   =========================== */
+
+.header__action-link--sos {
+  text-decoration: none;
+  margin-right: 0.75rem;
+}
+
+/* Emergency Button */
+.btn--emergency {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(135deg, #dc2626 0%, #b91c1c 100%);
+  color: #ffffff;
+  border: 2px solid #ef4444;
+  padding: 0.65rem 1.4rem;
+  font-size: 0.9rem;
+  font-weight: 700;
+  letter-spacing: 0.5px;
+  border-radius: 8px;
+  cursor: pointer;
+  text-transform: uppercase;
+  transition: all 0.25s ease;
+  box-shadow: 0 4px 15px rgba(220, 38, 38, 0.4);
+  white-space: nowrap;
+}
+
+/* Hover */
+.btn--emergency:hover {
+  background: linear-gradient(135deg, #b91c1c 0%, #991b1b 100%);
+  transform: translateY(-2px);
+  box-shadow: 0 6px 25px rgba(220, 38, 38, 0.6);
+}
+
+/* Active */
+.btn--emergency:active {
+  transform: translateY(0);
+  box-shadow: 0 2px 10px rgba(220, 38, 38, 0.4);
+}
+
+/* Focus (Accessibility) */
+.btn--emergency:focus-visible {
+  outline: 3px solid #fca5a5;
+  outline-offset: 2px;
+}
+
+/* Subtle glow animation */
+@keyframes sos-pulse {
+  0%, 100% {
+    box-shadow: 0 4px 15px rgba(220, 38, 38, 0.4);
+  }
+  50% {
+    box-shadow: 0 4px 25px rgba(220, 38, 38, 0.65);
+  }
+}
+
+.btn--emergency {
+  animation: sos-pulse 2s ease-in-out infinite;
+}
+
+/* Responsive Adjustments */
+@media (max-width: 768px) {
+  .btn--emergency {
+    padding: 0.55rem 1rem;
+    font-size: 0.8rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .header__actions {
+    flex-wrap: wrap;
+    gap: 0.4rem;
+  }
+
+  .btn--emergency {
+    padding: 0.5rem 0.75rem;
+    font-size: 0.75rem;
+  }
+}
