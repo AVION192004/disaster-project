@@ -5,18 +5,18 @@ from werkzeug.security import check_password_hash, generate_password_hash
 import jwt
 from datetime import datetime, timedelta
 import os
-<<<<<<< HEAD
+
 import random
 import uuid
 from inference_damage import DamageAssessor
-=======
+
 from groq import Groq
 from dotenv import load_dotenv
 
 # ==============================
 # App Setup
 # ==============================
->>>>>>> 3a32cc1b (Save current work)
+
 
 app = Flask(__name__)
 CORS(app)
@@ -24,15 +24,12 @@ CORS(app)
 app.config['SECRET_KEY'] = 'your-secret-key-change-this'
 
 DB_PATH = 'Rescuevision.db'
-<<<<<<< HEAD
 RESOURCE_DB_PATH = 'rescueplex.db'
 UPLOAD_FOLDER = 'uploads'
 os.makedirs(UPLOAD_FOLDER, exist_ok=True)
 
 # Load damage assessment model once at startup
 damage_assessor = DamageAssessor('best_model.pth')
-=======
->>>>>>> 3a32cc1b (Save current work)
 
 # ==============================
 # Load Environment Variables
@@ -399,7 +396,7 @@ def log_conversation(user_msg, bot_msg, location):
         print(f"⚠️ Logging error: {e}")
 
 
-<<<<<<< HEAD
+ 
 # ─── Damage Assessment endpoint ───────────────────────────────────────────────
 
 @app.route('/api/damage/assess', methods=['POST'])
@@ -454,11 +451,11 @@ def health():
         'db':          'connected' if os.path.exists(DB_PATH) else 'not found',
         'resource_db': 'connected' if os.path.exists(RESOURCE_DB_PATH) else 'not found',
     }), 200
-=======
+
 # ==============================
 # Test Endpoint
 # ==============================
->>>>>>> 3a32cc1b (Save current work)
+
 
 @app.route('/api/chatbot/test', methods=['GET'])
 def test_chatbot():
@@ -496,7 +493,7 @@ def test_chatbot():
 # ==============================
 
 if __name__ == '__main__':
-<<<<<<< HEAD
+ 
     print("=" * 50)
     print("Rescuevision Officer Login Backend")
     print("=" * 50)
@@ -506,7 +503,7 @@ if __name__ == '__main__':
     print("  Password: rescue123")
     print("=" * 50)
     app.run(debug=True, host='0.0.0.0', port=5000, use_reloader=False)
-=======
+
     print("\n" + "="*60)
     print("🚀 RescueVision Backend")
     print("="*60)
@@ -514,4 +511,4 @@ if __name__ == '__main__':
     print("Groq AI: " + ("✅ Enabled" if groq_client else "❌ Disabled (API key missing)"))
     print("="*60 + "\n")
     app.run(debug=True, port=5000)
->>>>>>> 3a32cc1b (Save current work)
+
