@@ -13,22 +13,13 @@ function Header() {
   }, []);
 
   const navItems = [
-<<<<<<< HEAD
     { to: '/',                   label: 'Home'              },
     { to: '/report-disaster',    label: 'Report Disaster'   },
     { to: '/damage-assessment',  label: 'Damage Assessment' },
     { to: '/features',           label: 'Features'          },
     { to: '/first-aid',          label: 'First Aid'         },
+    { to: '/shelters',           label: 'Shelters'          },
     { to: '/officer/dashboard',  label: 'Dashboard'         },
-=======
-  { to: '/', label: 'Home' },
-  { to: '/report-disaster', label: 'Report Disaster' },
-  { to: '/features', label: 'Features' },
-  { to: '/first-aid', label: 'First Aid' },
-  { to: '/shelters', label: 'Shelters' },   // ✅ ADD THIS
-  { to: '/dashboard', label: 'Dashboard' },
-
->>>>>>> 3a32cc1b (Save current work)
   ];
 
   return (
@@ -60,36 +51,33 @@ function Header() {
         </nav>
 
         {/* Auth Actions */}
-    {/* Auth Actions */}
-<div className="header__actions">
+        <div className="header__actions">
 
-  <Link
-    to="/sos"
-    className="btn btn--emergency header__action-link--sos"
-    aria-label="Emergency SOS"
-  >
-    🆘 SOS
-  </Link>
-  <Link to="/report-disaster">Report Disaster</Link>
+          <Link
+            to="/sos"
+            className="btn btn--emergency header__action-link--sos"
+            aria-label="Emergency SOS"
+          >
+            🆘 SOS
+          </Link>
 
+          <Link to="/relief-bot" className="header__nav-link">
+            🤖 Relief Bot
+          </Link>
 
-  <Link to="/relief-bot" className="header__nav-link">
-  🤖 Relief Bot
-</Link>
+          <Link to="/officer/login" className="header__action-link">
+            <button className="btn btn--ghost" type="button">
+              Sign In
+            </button>
+          </Link>
 
-  <Link to="/officer/login" className="header__action-link">
-    <button className="btn btn--ghost" type="button">
-      Sign In
-    </button>
-  </Link>
+          <Link to="/officer/register" className="header__action-link">
+            <button className="btn btn--primary" type="button">
+              Sign Up
+            </button>
+          </Link>
 
-  <Link to="/officer/register" className="header__action-link">
-    <button className="btn btn--primary" type="button">
-      Sign Up
-    </button>
-  </Link>
-
-</div>
+        </div>
 
       </div>
     </header>
