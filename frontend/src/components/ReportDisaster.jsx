@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { AlertTriangle, MapPin, Phone, User, Mail, Upload, Send, CheckCircle, ArrowLeft } from 'lucide-react';
+import { useEffect } from "react";
 
 export default function ReportDisaster() {
   const [formData, setFormData] = useState({
@@ -33,6 +34,35 @@ export default function ReportDisaster() {
   const removeFile = (index) => {
     setSelectedFiles(prev => prev.filter((_, i) => i !== index));
   };
+
+   useEffect(() => {
+    const syncReports = async () => {
+      const offlineReports =
+        JSON.parse(localStorage.getItem("offlineReports")) || [];
+
+      if (offlineReports.length === 0) return;
+
+      try {
+        for (let report of offlineReports) {
+          await fetch("http://127.0.0.1:5000/api/disaster/report", {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify(report),
+          });
+        }
+
+        localStorage.removeItem("offlineReports");
+        alert("✅ Offline reports synced successfully");
+      } catch (err) {
+        console.error("Sync failed", err);
+      }
+    };
+
+    window.addEventListener("online", syncReports);
+    return () => window.removeEventListener("online", syncReports);
+  }, []);
 
   const handleSubmit = async (e) => {
     e.preventDefault();

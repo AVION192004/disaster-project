@@ -1,5 +1,6 @@
 from flask import Flask, request, jsonify
 from flask_cors import CORS
+from flask_socketio import SocketIO, emit
 import sqlite3
 from werkzeug.security import check_password_hash, generate_password_hash
 import jwt
@@ -17,9 +18,9 @@ from dotenv import load_dotenv
 # App Setup
 # ==============================
 
-
 app = Flask(__name__)
-CORS(app)
+CORS(app, resources={r"/*": {"origins": "*"}})
+socketio = SocketIO(app, cors_allowed_origins="*")
 
 app.config['SECRET_KEY'] = 'your-secret-key-change-this'
 
@@ -35,16 +36,10 @@ damage_assessor = DamageAssessor('best_model.pth')
 # Load Environment Variables
 # ==============================
 
-# ==============================
-# Load Environment Variables
-# ==============================
-
 load_dotenv()  # Load from .env file
+GROQ_API_KEY = os.getenv("GROQ_API_KEY")
 
-# DIRECT FIX - Hardcode for now
-GROQ_API_KEY = ""
-
-print(f"DEBUG: GROQ_API_KEY = {GROQ_API_KEY[:20]}...")  # Should print first 20 chars
+print("DEBUG KEY:", GROQ_API_KEY[:20] if GROQ_API_KEY else "None")
 
 if not GROQ_API_KEY:
     print("⚠️ WARNING: GROQ_API_KEY not found in environment variables")
@@ -83,7 +78,6 @@ def init_db():
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
     )''')
 
-    # ✅ FIXED: Added latitude and longitude columns
     c.execute('''CREATE TABLE IF NOT EXISTS chatbot_logs (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         user_message TEXT NOT NULL,
@@ -92,12 +86,37 @@ def init_db():
         longitude REAL,
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
     )''')
+    
 
+  # ✅ SHELTERS TABLE
+    c.execute('''
+    CREATE TABLE IF NOT EXISTS shelters (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        name TEXT,
+        latitude REAL,
+        longitude REAL,
+        capacity INTEGER,
+        available INTEGER
+    )
+    ''')
     conn.commit()
     conn.close()
     print("✅ Database initialized")
 
 init_db()
+
+# ==============================
+# SocketIO Event Handlers
+# ==============================
+
+@socketio.on('connect')
+def handle_connect():
+    print('✅ Client connected')
+    emit('connection_response', {'data': 'Connected to RescueVision'})
+
+@socketio.on('disconnect')
+def handle_disconnect():
+    print('❌ Client disconnected')
 
 # ==============================
 # Officer Auth
@@ -128,6 +147,32 @@ def officer_register():
 
     except sqlite3.IntegrityError:
         return jsonify({'success': False, 'error': 'Email already exists'}), 409
+    
+
+@app.route('/api/shelters', methods=['GET'])
+def get_shelters():
+
+    conn = sqlite3.connect(DB_PATH)
+    c = conn.cursor()
+
+    c.execute("SELECT id,name,latitude,longitude,capacity,available FROM shelters")
+    rows = c.fetchall()
+
+    conn.close()
+
+    shelters = []
+
+    for r in rows:
+        shelters.append({
+            "id": r[0],
+            "name": r[1],
+            "latitude": r[2],
+            "longitude": r[3],
+            "capacity": r[4],
+            "available": r[5]
+        })
+
+    return jsonify(shelters)
 
 
 @app.route('/api/officer/login', methods=['POST'])
@@ -179,18 +224,71 @@ def report_disaster():
     name = data.get('name')
     location = data.get('location')
     description = data.get('description')
+    severity = data.get('severity', 'Medium')
+    reporter_name = data.get('reporter_name', 'Anonymous')
+    reporter_phone = data.get('reporter_phone', '')
 
     if not name or not location:
         return jsonify({'success': False, 'error': 'Name and location required'}), 400
 
     conn = sqlite3.connect(DB_PATH)
     c = conn.cursor()
-    c.execute('INSERT INTO disaster_reports (name, location, description) VALUES (?, ?, ?)',
-              (name, location, description))
+    c.execute('''INSERT INTO disaster_reports 
+                (name, location, description, severity, reporter_name, reporter_phone) 
+                VALUES (?, ?, ?, ?, ?, ?)''',
+              (name, location, description, severity, reporter_name, reporter_phone))
+    report_id = c.lastrowid
     conn.commit()
     conn.close()
 
-    return jsonify({'success': True, 'message': 'Report submitted'}), 201
+    # ✅ EMIT REAL-TIME NOTIFICATION
+    socketio.emit('new_disaster_report', {
+        'id': report_id,
+        'name': name,
+        'location': location,
+        'severity': severity,
+        'reporter_name': reporter_name,
+        'timestamp': datetime.now().isoformat()
+    }, broadcast=True)
+
+    return jsonify({
+        'success': True,
+        'message': 'Report submitted',
+        'report_id': report_id
+    }), 201
+
+
+@app.route('/api/disaster/report/<int:report_id>', methods=['PUT'])
+def update_disaster_status(report_id):
+    data = request.get_json()
+    new_status = data.get('status')
+
+    if not new_status:
+        return jsonify({'success': False, 'error': 'Status required'}), 400
+
+    conn = sqlite3.connect(DB_PATH)
+    c = conn.cursor()
+    c.execute('UPDATE disaster_reports SET status = ? WHERE id = ?',
+              (new_status, report_id))
+    conn.commit()
+
+    # Get report details
+    c.execute('SELECT name, location, reporter_phone FROM disaster_reports WHERE id = ?',
+              (report_id,))
+    report = c.fetchone()
+    conn.close()
+
+    if report:
+        # ✅ EMIT STATUS UPDATE NOTIFICATION
+        socketio.emit('disaster_status_updated', {
+            'report_id': report_id,
+            'name': report[0],
+            'location': report[1],
+            'new_status': new_status,
+            'timestamp': datetime.now().isoformat()
+        }, broadcast=True)
+
+    return jsonify({'success': True, 'message': 'Status updated'}), 200
 
 
 @app.route('/api/disaster/reports', methods=['GET'])
@@ -228,23 +326,22 @@ def groq_chat():
     FREE AI-powered chatbot using Groq (SUPER FAST!)
     """
     try:
-        # Check if Groq is available
         if not groq_client:
             return jsonify({
                 'success': False,
                 'error': 'Groq API key not configured',
                 'fallback': True
             }), 500
-        
+
         data = request.get_json()
-        
+
         user_message = data.get('message', '')
         conversation_history = data.get('history', [])
         user_location = data.get('location')
-        
+
         if not user_message:
             return jsonify({'success': False, 'error': 'Message required'}), 400
-        
+
         # Build system prompt
         system_prompt = """You are a compassionate Relief Assistant Bot for disaster management.
 
@@ -281,56 +378,56 @@ Would you like me to: [option 1] / [option 2] / [option 3]"""
                 "content": system_prompt
             }
         ]
-        
+
         # Add conversation history (last 4 messages for context)
         for msg in conversation_history[-4:]:
             messages.append({
                 "role": "user" if msg['type'] == 'user' else "assistant",
                 "content": msg['text']
             })
-        
+
         # Add location context if available
         location_context = ""
         if user_location:
             location_context = f"\n[User Location: Lat {user_location['latitude']:.4f}, Lon {user_location['longitude']:.4f}]"
-        
+
         # Add current message
         messages.append({
             "role": "user",
             "content": user_message + location_context
         })
-        
-        # Call Groq API (SUPER FAST!)
+
+        # Call Groq API
         response = groq_client.chat.completions.create(
-            model="llama-3.3-70b-versatile",  # Best free model
+            model="llama-3.3-70b-versatile",
             messages=messages,
             temperature=0.7,
             max_tokens=500,
             top_p=1,
             stream=False
         )
-        
+
         bot_response = response.choices[0].message.content
-        
+
         # Extract quick replies from response
         quick_replies = extract_quick_replies(bot_response)
-        
+
         # Log conversation to database
         log_conversation(user_message, bot_response, user_location)
-        
+
         return jsonify({
             'success': True,
             'response': bot_response,
             'quick_replies': quick_replies
         }), 200
-    
+
     except Exception as e:
-        print(f"❌ Groq error: {str(e)}")
-        # Return error for frontend to handle fallback
+        import traceback
+        traceback.print_exc()
         return jsonify({
-            'success': False,
-            'error': str(e),
-            'fallback': True
+            "success": False,
+            "error": str(e),
+            "fallback": True
         }), 500
 
 
@@ -339,24 +436,19 @@ def extract_quick_replies(text):
     Extract quick reply options from bot response
     """
     quick_replies = []
-    
-    # Look for "Would you like" or similar patterns
+
     if "would you like" in text.lower() or "do you need" in text.lower():
-        # Extract options after the question
         lines = text.split('\n')
         for i, line in enumerate(lines):
             if "would you like" in line.lower() or "do you need" in line.lower():
-                # Look at next few lines for options
                 for j in range(i+1, min(i+5, len(lines))):
                     option_line = lines[j].strip()
-                    # Check for bullet points or numbered lists
                     if option_line and any(option_line.startswith(p) for p in ['•', '-', '1.', '2.', '3.']):
                         option = option_line.lstrip('•-123. ').strip()
                         if 5 < len(option) < 50:
                             quick_replies.append(option)
                 break
-    
-    # If no options found in text, provide generic contextual ones
+
     if not quick_replies:
         text_lower = text.lower()
         if 'emergency' in text_lower:
@@ -369,8 +461,8 @@ def extract_quick_replies(text):
             quick_replies = ['Call ambulance', 'Nearest hospital', 'First aid tips']
         else:
             quick_replies = ['Emergency help', 'Find resources', 'Safety tips']
-    
-    return quick_replies[:4]  # Maximum 4 quick replies
+
+    return quick_replies[:4]
 
 
 def log_conversation(user_msg, bot_msg, location):
@@ -380,7 +472,7 @@ def log_conversation(user_msg, bot_msg, location):
     try:
         conn = sqlite3.connect(DB_PATH)
         c = conn.cursor()
-        
+
         c.execute('''INSERT INTO chatbot_logs 
                     (user_message, bot_response, latitude, longitude, created_at)
                     VALUES (?, ?, ?, ?, ?)''',
@@ -388,7 +480,7 @@ def log_conversation(user_msg, bot_msg, location):
                    location.get('latitude') if location else None,
                    location.get('longitude') if location else None,
                    datetime.now().isoformat()))
-        
+
         conn.commit()
         conn.close()
         print("✅ Conversation logged")
@@ -396,8 +488,9 @@ def log_conversation(user_msg, bot_msg, location):
         print(f"⚠️ Logging error: {e}")
 
 
- 
-# ─── Damage Assessment endpoint ───────────────────────────────────────────────
+# ==============================
+# Damage Assessment Endpoint
+# ==============================
 
 @app.route('/api/damage/assess', methods=['POST'])
 def assess_damage():
@@ -441,7 +534,9 @@ def assess_damage():
         return jsonify({'success': False, 'error': 'Assessment failed. Please try again.'}), 500
 
 
-# ─── Health check ─────────────────────────────────────────────────────────────
+# ==============================
+# Health Check
+# ==============================
 
 @app.route('/api/health', methods=['GET'])
 def health():
@@ -452,10 +547,10 @@ def health():
         'resource_db': 'connected' if os.path.exists(RESOURCE_DB_PATH) else 'not found',
     }), 200
 
+
 # ==============================
 # Test Endpoint
 # ==============================
-
 
 @app.route('/api/chatbot/test', methods=['GET'])
 def test_chatbot():
@@ -468,14 +563,14 @@ def test_chatbot():
             'error': 'Groq API key not configured',
             'message': 'Please set GROQ_API_KEY environment variable'
         }), 500
-    
+
     try:
         response = groq_client.chat.completions.create(
             model="llama-3.3-70b-versatile",
             messages=[{"role": "user", "content": "Say 'Groq is working!' if you can read this."}],
             max_tokens=50
         )
-        
+
         return jsonify({
             'success': True,
             'message': 'Groq API is working!',
@@ -493,22 +588,12 @@ def test_chatbot():
 # ==============================
 
 if __name__ == '__main__':
- 
-    print("=" * 50)
-    print("Rescuevision Officer Login Backend")
-    print("=" * 50)
-    print("Starting server on http://0.0.0.0:5000")
-    print("\nDemo Credentials:")
-    print("  Email: officer1@rescue.com")
-    print("  Password: rescue123")
-    print("=" * 50)
-    app.run(debug=True, host='0.0.0.0', port=5000, use_reloader=False)
-
-    print("\n" + "="*60)
-    print("🚀 RescueVision Backend")
-    print("="*60)
+    print("=" * 60)
+    print("🚀 RescueVision Backend with Real-Time Notifications")
+    print("=" * 60)
     print("Server: http://localhost:5000")
     print("Groq AI: " + ("✅ Enabled" if groq_client else "❌ Disabled (API key missing)"))
-    print("="*60 + "\n")
-    app.run(debug=True, port=5000)
+    print("SocketIO: ✅ Enabled")
+    print("=" * 60 + "\n")
 
+    socketio.run(app, debug=True, port=5000)  # ✅ socketio.run instead of app.run

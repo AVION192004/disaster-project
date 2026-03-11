@@ -1,0 +1,20 @@
+.reliefbot-floating {
+  position: fixed;
+  bottom: 25px;
+  right: 25px;
+  width: 65px;
+  height: 65px;
+  border-radius: 50%;
+  border: none;
+  background: linear-gradient(135deg,#6c5ce7,#8e44ad);
+  color: white;
+  font-size: 28px;
+  cursor: pointer;
+  box-shadow: 0 8px 25px rgba(0,0,0,0.4);
+  z-index: 9999;
+  transition: transform 0.2s ease;
+}
+
+.reliefbot-floating:hover {
+  transform: scale(1.1);
+}
