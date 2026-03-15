@@ -1,11 +1,10 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
-
 import Header from "./components/Header";
 import HeroSection from "./components/HeroSection";
 import Features from "./components/Features";
 import HowItWorks from "./components/HowItWorks";
-import DamageAssessment from './components/DamageAssessment';
+import DamageAssessment from "./components/DamageAssessment";
 import SignUp from "./components/SignUp";
 import SignIn from "./components/SignIn";
 import Dashboard from "./components/Dashboard";
@@ -19,26 +18,45 @@ import OfficerDashboard from "./pages/OfficerDashboard";
 import AdminDisaster from "./pages/AdminDisaster";
 import ShelterFinder from "./components/ShelterFinder";
 import ReliefBot from "./components/ReliefBot";
+import DisasterNews from "./components/DisasterNews";
+import ReliefBotFloating from "./components/ReliefBotFloating";
+import ThemeToggle from "./components/ThemeToggle";
 
-
-// Reusable dark page wrapper — fixes white gap on all pages
 const darkPage = {
-  backgroundColor: '#0D1117',
-  minHeight: '100vh',
-  paddingTop: '20px',
+  backgroundColor: "#0D1117",
+  minHeight: "100vh",
+  paddingTop: "20px",
 };
 
 function App() {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
 
+  // ✅ Offline / Online detection
+  useEffect(() => {
+    const handleOffline = () => {
+      alert("⚠️ You are offline. Emergency reports will be saved locally.");
+    };
+
+    const handleOnline = () => {
+      alert("✅ Internet restored. Syncing reports.");
+    };
+
+    window.addEventListener("offline", handleOffline);
+    window.addEventListener("online", handleOnline);
+
+    return () => {
+      window.removeEventListener("offline", handleOffline);
+      window.removeEventListener("online", handleOnline);
+    };
+  }, []);
+
   return (
     <Router>
-      {/* Dark background covers entire app — no more white gaps */}
-      <div className="App" style={{ backgroundColor: '#0D1117', minHeight: '100vh' }}>
+      <div className="App" style={{ backgroundColor: "#0D1117", minHeight: "100vh" }}>
         <Header />
-        <Routes>
 
-          {/* Home Page — clean, just hero + how it works */}
+        <Routes>
+          {/* Home Page */}
           <Route
             path="/"
             element={
@@ -49,22 +67,22 @@ function App() {
             }
           />
 
-          {/* Damage Assessment — full dark page */}
-          <Route
-            path="/damage-assessment"
-            element={
-              <div style={{ ...darkPage, padding: '40px 20px' }}>
-                <DamageAssessment />
-              </div>
-            }
-          />
-
-          {/* Report Disaster — its own dedicated page */}
+          {/* Report Disaster */}
           <Route
             path="/report-disaster"
             element={
               <div style={darkPage}>
                 <ReportDisaster />
+              </div>
+            }
+          />
+
+          {/* Damage Assessment */}
+          <Route
+            path="/damage-assessment"
+            element={
+              <div style={{ ...darkPage, padding: "40px 20px" }}>
+                <DamageAssessment />
               </div>
             }
           />
@@ -119,10 +137,29 @@ function App() {
             }
           />
 
-          {/* Auth pages */}
-          <Route path="/signup" element={<div style={darkPage}><SignUp /></div>} />
+          {/* Disaster News */}
           <Route
-            path="/signIn"
+            path="/disaster-news"
+            element={
+              <div style={darkPage}>
+                <DisasterNews />
+              </div>
+            }
+          />
+
+          {/* Sign Up */}
+          <Route
+            path="/signup"
+            element={
+              <div style={darkPage}>
+                <SignUp />
+              </div>
+            }
+          />
+
+          {/* Sign In */}
+          <Route
+            path="/signin"
             element={
               <div style={darkPage}>
                 <SignIn onSignIn={() => setIsAuthenticated(true)} />
@@ -130,6 +167,7 @@ function App() {
             }
           />
 
+          {/* Dashboard */}
           <Route
             path="/dashboard"
             element={
@@ -139,16 +177,36 @@ function App() {
             }
           />
 
-          {/* Officer Routes */}
-          <Route path="/officer/register" element={<div style={darkPage}><OfficerRegister /></div>} />
-          <Route path="/officer/login"    element={<div style={darkPage}><OfficerLogin /></div>} />
+          {/* Officer Register */}
+          <Route
+            path="/officer/register"
+            element={
+              <div style={darkPage}>
+                <OfficerRegister />
+              </div>
+            }
+          />
+
+          {/* Officer Login */}
+          <Route
+            path="/officer/login"
+            element={
+              <div style={darkPage}>
+                <OfficerLogin />
+              </div>
+            }
+          />
+
+          {/* Officer Dashboard */}
           <Route path="/officer/dashboard" element={<OfficerDashboard />} />
 
-          {/* Admin Routes */}
+          {/* Admin Dashboard */}
           <Route path="/admin/disaster" element={<AdminDisaster />} />
-
         </Routes>
       </div>
+
+      <ReliefBotFloating />
+      <ThemeToggle />
     </Router>
   );
 }
