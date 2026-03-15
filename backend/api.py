@@ -6,8 +6,10 @@ from werkzeug.security import check_password_hash, generate_password_hash
 import jwt
 from datetime import datetime, timedelta
 import os
+import requests
 
 import random
+import math
 import uuid
 from inference_damage import DamageAssessor
 
@@ -19,35 +21,39 @@ from dotenv import load_dotenv
 # ==============================
 
 app = Flask(__name__)
+app.config['SECRET_KEY'] = os.getenv('SECRET_KEY', 'default-dev-secret-key')
+
+# ✅ FIXED: Simple CORS + SocketIO — no async_mode
 CORS(app, resources={r"/*": {"origins": "*"}})
 socketio = SocketIO(app, cors_allowed_origins="*")
-
-app.config['SECRET_KEY'] = 'your-secret-key-change-this'
 
 DB_PATH = 'Rescuevision.db'
 RESOURCE_DB_PATH = 'rescueplex.db'
 UPLOAD_FOLDER = 'uploads'
 os.makedirs(UPLOAD_FOLDER, exist_ok=True)
 
-# Load damage assessment model once at startup
-damage_assessor = DamageAssessor('best_model.pth')
+try:
+    damage_assessor = DamageAssessor('best_model.pth')
+except Exception as e:
+    print(f"⚠️ Warning: Could not load DamageAssessor model: {e}")
+    damage_assessor = None
 
 # ==============================
 # Load Environment Variables
 # ==============================
 
-load_dotenv()  # Load from .env file
+load_dotenv()
 GROQ_API_KEY = os.getenv("GROQ_API_KEY")
+TELEGRAM_TOKEN = os.getenv("TELEGRAM_BOT_TOKEN")
+TELEGRAM_CHAT_ID = os.getenv("TELEGRAM_CHAT_ID")
 
 print("DEBUG KEY:", GROQ_API_KEY[:20] if GROQ_API_KEY else "None")
 
 if not GROQ_API_KEY:
     print("⚠️ WARNING: GROQ_API_KEY not found in environment variables")
-    print("   Please set it with: set GROQ_API_KEY=your-key-here")
 else:
     print("✅ GROQ_API_KEY loaded successfully")
 
-# Initialize Groq client
 groq_client = Groq(api_key=GROQ_API_KEY) if GROQ_API_KEY else None
 
 # ==============================
@@ -58,20 +64,15 @@ def init_db():
     conn = sqlite3.connect(DB_PATH)
     c = conn.cursor()
 
-    # Officers table
-    c.execute("""
-    CREATE TABLE IF NOT EXISTS officers (
+    c.execute("""CREATE TABLE IF NOT EXISTS officers (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         email TEXT UNIQUE NOT NULL,
         password TEXT NOT NULL,
         name TEXT NOT NULL,
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-    )
-    """)
+    )""")
 
-    # Disaster reports
-    c.execute("""
-    CREATE TABLE IF NOT EXISTS disaster_reports (
+    c.execute("""CREATE TABLE IF NOT EXISTS disaster_reports (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         name TEXT NOT NULL,
         location TEXT NOT NULL,
@@ -81,54 +82,44 @@ def init_db():
         reporter_phone TEXT,
         status TEXT DEFAULT 'Pending',
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-    )
-    """)
+    )""")
 
-    # Chatbot logs
-    c.execute("""
-    CREATE TABLE IF NOT EXISTS chatbot_logs (
+    c.execute("""CREATE TABLE IF NOT EXISTS chatbot_logs (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         user_message TEXT NOT NULL,
         bot_response TEXT NOT NULL,
         latitude REAL,
         longitude REAL,
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-    )
-    """)
+    )""")
 
-    # Shelters table
-    c.execute("""
-    CREATE TABLE IF NOT EXISTS shelters (
+    c.execute("""CREATE TABLE IF NOT EXISTS shelters (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         name TEXT,
         latitude REAL,
         longitude REAL,
         capacity INTEGER,
         available INTEGER
-    )
-    """)
+    )""")
 
-    # Insert default shelters
     c.execute("SELECT COUNT(*) FROM shelters")
-    count = c.fetchone()[0]
-
-    if count == 0:
+    if c.fetchone()[0] == 0:
         shelters = [
             ("Community Hall Shelter", 9.9816, 76.2999, 200, 150),
             ("Government School Shelter", 9.9852, 76.3024, 300, 220),
             ("Relief Camp Stadium", 9.9780, 76.2950, 500, 400)
         ]
+        for shelter in shelters:
+            c.execute("INSERT INTO shelters (name, latitude, longitude, capacity, available) VALUES (?, ?, ?, ?, ?)", shelter)
 
-        c.executemany(
-            "INSERT INTO shelters (name, latitude, longitude, capacity, available) VALUES (?, ?, ?, ?, ?)",
-            shelters
-        )
+    c.execute("""CREATE TABLE IF NOT EXISTS telegram_users (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    chat_id TEXT UNIQUE
+    )""")
 
     conn.commit()
     conn.close()
-
     print("✅ Database initialized")
-
 
 init_db()
 
@@ -152,7 +143,6 @@ def handle_disconnect():
 @app.route('/api/officer/register', methods=['POST'])
 def officer_register():
     data = request.get_json()
-
     email = data.get('email')
     password = data.get('password')
     name = data.get('name')
@@ -165,47 +155,17 @@ def officer_register():
     try:
         conn = sqlite3.connect(DB_PATH)
         c = conn.cursor()
-        c.execute('INSERT INTO officers (email, password, name) VALUES (?, ?, ?)',
-                  (email, hashed_password, name))
+        c.execute('INSERT INTO officers (email, password, name) VALUES (?, ?, ?)', (email, hashed_password, name))
         conn.commit()
         conn.close()
-
         return jsonify({'success': True, 'message': 'Registered successfully'}), 201
-
     except sqlite3.IntegrityError:
         return jsonify({'success': False, 'error': 'Email already exists'}), 409
-    
-
-@app.route('/api/shelters', methods=['GET'])
-def get_shelters():
-
-    conn = sqlite3.connect(DB_PATH)
-    c = conn.cursor()
-
-    c.execute("SELECT id,name,latitude,longitude,capacity,available FROM shelters")
-    rows = c.fetchall()
-
-    conn.close()
-
-    shelters = []
-
-    for r in rows:
-        shelters.append({
-            "id": r[0],
-            "name": r[1],
-            "latitude": r[2],
-            "longitude": r[3],
-            "capacity": r[4],
-            "available": r[5]
-        })
-
-    return jsonify(shelters)
 
 
 @app.route('/api/officer/login', methods=['POST'])
 def officer_login():
     data = request.get_json()
-
     email = data.get('email')
     password = data.get('password')
 
@@ -233,13 +193,133 @@ def officer_login():
     return jsonify({
         'success': True,
         'token': token,
-        'officer': {
-            'id': officer_id,
-            'email': officer_email,
-            'name': officer_name
-        }
+        'officer': {'id': officer_id, 'email': officer_email, 'name': officer_name}
     }), 200
 
+# ==============================
+# Shelters API
+# ==============================
+
+@app.route('/api/shelters', methods=['GET'])
+def get_shelters():
+    conn = sqlite3.connect(DB_PATH)
+    c = conn.cursor()
+    c.execute("SELECT id,name,latitude,longitude,capacity,available FROM shelters")
+    rows = c.fetchall()
+    conn.close()
+    return jsonify([{"id": r[0], "name": r[1], "latitude": r[2], "longitude": r[3], "capacity": r[4], "available": r[5]} for r in rows])
+
+@app.route('/api/shelters', methods=['POST'])
+def add_shelter():
+    data = request.get_json()
+    name = data.get("name")
+    latitude = data.get("latitude")
+    longitude = data.get("longitude")
+    capacity = data.get("capacity", 0)
+
+    if not name or not latitude or not longitude:
+        return jsonify({"success": False, "error": "Missing fields"}), 400
+
+    conn = sqlite3.connect(DB_PATH)
+    c = conn.cursor()
+    c.execute("INSERT INTO shelters (name, latitude, longitude, capacity, available) VALUES (?, ?, ?, ?, ?)",
+              (name, latitude, longitude, capacity, capacity))
+    conn.commit()
+    conn.close()
+    return jsonify({"success": True, "message": "Shelter added"})
+
+@app.route('/api/shelters/nearest', methods=['POST'])
+def nearest_shelter():
+    data = request.get_json()
+    user_lat = float(data.get("latitude"))
+    user_lon = float(data.get("longitude"))
+
+    conn = sqlite3.connect(DB_PATH)
+    c = conn.cursor()
+    c.execute("SELECT id,name,latitude,longitude,capacity,available FROM shelters")
+    rows = c.fetchall()
+    conn.close()
+
+    nearest = None
+    min_distance = 9999
+
+    for r in rows:
+        # Haversine formula for accurate geographic distance
+        R = 6371  # Earth radius in km
+        shelter_lat, shelter_lon = float(r[2]), float(r[3])
+        dlat = math.radians(shelter_lat - user_lat)
+        dlon = math.radians(shelter_lon - user_lon)
+        a = math.sin(dlat/2) * math.sin(dlat/2) + \
+            math.cos(math.radians(user_lat)) * math.cos(math.radians(shelter_lat)) * \
+            math.sin(dlon/2) * math.sin(dlon/2)
+        c = 2 * math.atan2(math.sqrt(a), math.sqrt(1-a))
+        distance = R * c
+
+        if distance < min_distance:
+            min_distance = distance
+            nearest = r
+
+    if not nearest:
+        return jsonify({"error": "No shelters found"}), 404
+
+    return jsonify({
+        "id": nearest[0], "name": nearest[1],
+        "latitude": nearest[2], "longitude": nearest[3],
+        "capacity": nearest[4], "available": nearest[5],
+        "distance_km": round(min_distance, 2)
+    })
+
+@app.route("/telegram/webhook", methods=["POST"])
+def telegram_webhook():
+    data = request.json
+
+    if "message" in data:
+        chat_id = data["message"].get("chat", {}).get("id")
+        text = data["message"].get("text", "")
+
+        if text == "/start":
+            conn = sqlite3.connect(DB_PATH)
+            c = conn.cursor()
+
+            c.execute("INSERT OR IGNORE INTO telegram_users (chat_id) VALUES (?)", (chat_id,))
+            conn.commit()
+            conn.close()
+
+            requests.post(
+                f"https://api.telegram.org/bot{TELEGRAM_TOKEN}/sendMessage",
+                json={
+                    "chat_id": chat_id,
+                    "text": "✅ You will now receive disaster alerts from RescueVision."
+                }
+            )
+
+    return jsonify({"status": "ok"})
+# ==============================
+# Telegram Alerts
+# ==============================
+
+def send_telegram_alert(message):
+    try:
+        if not TELEGRAM_TOKEN or not TELEGRAM_CHAT_ID:
+            print("⚠️ Telegram bot not configured")
+            return
+
+        url = f"https://api.telegram.org/bot{TELEGRAM_TOKEN}/sendMessage"
+
+        response = requests.post(
+            url,
+            json={
+                "chat_id": TELEGRAM_CHAT_ID,
+                "text": message,
+                "parse_mode": "HTML"
+            },
+            timeout=5
+        )
+
+        print("Telegram response:", response.json())
+
+    except requests.exceptions.RequestException as e:
+        print("Telegram request failed:", e)
 # ==============================
 # Disaster Reports
 # ==============================
@@ -268,21 +348,15 @@ def report_disaster():
     conn.commit()
     conn.close()
 
-    # ✅ EMIT REAL-TIME NOTIFICATION
-    socketio.emit('new_disaster_report', {
-        'id': report_id,
-        'name': name,
-        'location': location,
-        'severity': severity,
-        'reporter_name': reporter_name,
-        'timestamp': datetime.now().isoformat()
-    }, broadcast=True)
+    send_telegram_alert(f"🚨 NEW DISASTER REPORT\n\n📍 Location: {location}\n🔥 Type: {name}\n⚠️ Severity: {severity}\n\n👤 Reporter: {reporter_name}\n📞 Phone: {reporter_phone or 'Not provided'}")
 
-    return jsonify({
-        'success': True,
-        'message': 'Report submitted',
-        'report_id': report_id
-    }), 201
+    socketio.emit('new_disaster_report', {
+        'id': report_id, 'name': name, 'location': location,
+        'severity': severity, 'reporter_name': reporter_name,
+        'timestamp': datetime.now().isoformat()},
+    )
+
+    return jsonify({'success': True, 'message': 'Report submitted', 'report_id': report_id}), 201
 
 
 @app.route('/api/disaster/report/<int:report_id>', methods=['PUT'])
@@ -295,25 +369,17 @@ def update_disaster_status(report_id):
 
     conn = sqlite3.connect(DB_PATH)
     c = conn.cursor()
-    c.execute('UPDATE disaster_reports SET status = ? WHERE id = ?',
-              (new_status, report_id))
+    c.execute('UPDATE disaster_reports SET status = ? WHERE id = ?', (new_status, report_id))
     conn.commit()
-
-    # Get report details
-    c.execute('SELECT name, location, reporter_phone FROM disaster_reports WHERE id = ?',
-              (report_id,))
+    c.execute('SELECT name, location, reporter_phone FROM disaster_reports WHERE id = ?', (report_id,))
     report = c.fetchone()
     conn.close()
 
     if report:
-        # ✅ EMIT STATUS UPDATE NOTIFICATION
         socketio.emit('disaster_status_updated', {
-            'report_id': report_id,
-            'name': report[0],
-            'location': report[1],
-            'new_status': new_status,
-            'timestamp': datetime.now().isoformat()
-        }, broadcast=True)
+            'report_id': report_id, 'name': report[0], 'location': report[1],
+            'new_status': new_status, 'timestamp': datetime.now().isoformat()},
+        )
 
     return jsonify({'success': True, 'message': 'Status updated'}), 200
 
@@ -326,22 +392,11 @@ def get_reports():
     rows = c.fetchall()
     conn.close()
 
-    reports = []
-    for r in rows:
-        reports.append({
-            'id': r[0],
-            'name': r[1],
-            'location': r[2],
-            'description': r[3],
-            'severity': r[4],
-            'reporter_name': r[5],
-            'reporter_phone': r[6],
-            'status': r[7],
-            'created_at': r[8]
-        })
-
-    return jsonify({'success': True, 'reports': reports})
-
+    return jsonify({'success': True, 'reports': [
+        {'id': r[0], 'name': r[1], 'location': r[2], 'description': r[3],
+         'severity': r[4], 'reporter_name': r[5], 'reporter_phone': r[6],
+         'status': r[7], 'created_at': r[8]} for r in rows
+    ]})
 
 # ==============================
 # Groq AI Chatbot
@@ -349,19 +404,11 @@ def get_reports():
 
 @app.route('/api/chatbot/groq-chat', methods=['POST'])
 def groq_chat():
-    """
-    FREE AI-powered chatbot using Groq (SUPER FAST!)
-    """
     try:
         if not groq_client:
-            return jsonify({
-                'success': False,
-                'error': 'Groq API key not configured',
-                'fallback': True
-            }), 500
+            return jsonify({'success': False, 'error': 'Groq API key not configured', 'fallback': True}), 500
 
         data = request.get_json()
-
         user_message = data.get('message', '')
         conversation_history = data.get('history', [])
         user_location = data.get('location')
@@ -369,175 +416,83 @@ def groq_chat():
         if not user_message:
             return jsonify({'success': False, 'error': 'Message required'}), 400
 
-        # Build system prompt
-        system_prompt = """You are a compassionate Relief Assistant Bot for disaster management.
+        messages = [{"role": "system", "content": """You are a compassionate Relief Assistant Bot for disaster management.
+Your role: Provide emergency information, help find missing persons, offer mental health support, give safety guidance.
+Use emojis, keep responses under 250 words, provide actionable information."""}]
 
-Your role:
-• Provide emergency information (contacts, shelters, food, medical help)
-• Help find missing persons
-• Offer mental health support
-• Give safety guidance
-• Be empathetic and clear
-
-Response format:
-• Use emojis for quick scanning (🚨 🏠 🍽️ ⚕️ 📍 💚)
-• Keep responses under 250 words
-• Provide actionable information
-• Include contact numbers when relevant
-• Suggest 2-3 follow-up options at the end
-
-Example response structure:
-🚨 **[SECTION TITLE]**
-
-Key information:
-• Point 1
-• Point 2
-• Point 3
-
-Contact: [if relevant]
-
-Would you like me to: [option 1] / [option 2] / [option 3]"""
-
-        # Build messages array
-        messages = [
-            {
-                "role": "system",
-                "content": system_prompt
-            }
-        ]
-
-        # Add conversation history (last 4 messages for context)
         for msg in conversation_history[-4:]:
-            messages.append({
-                "role": "user" if msg['type'] == 'user' else "assistant",
-                "content": msg['text']
-            })
+            if isinstance(msg, dict) and 'type' in msg and 'text' in msg:
+                messages.append({"role": "user" if msg['type'] == 'user' else "assistant", "content": msg['text']})
 
-        # Add location context if available
-        location_context = ""
-        if user_location:
-            location_context = f"\n[User Location: Lat {user_location['latitude']:.4f}, Lon {user_location['longitude']:.4f}]"
+        location_context = f"\n[User Location: Lat {user_location['latitude']:.4f}, Lon {user_location['longitude']:.4f}]" if user_location else ""
+        messages.append({"role": "user", "content": user_message + location_context})
 
-        # Add current message
-        messages.append({
-            "role": "user",
-            "content": user_message + location_context
-        })
-
-        # Call Groq API
         response = groq_client.chat.completions.create(
-            model="llama-3.3-70b-versatile",
-            messages=messages,
-            temperature=0.7,
-            max_tokens=500,
-            top_p=1,
-            stream=False
+            model="llama-3.3-70b-versatile", messages=messages,
+            temperature=0.7, max_tokens=500, top_p=1, stream=False
         )
 
         bot_response = response.choices[0].message.content
-
-        # Extract quick replies from response
-        quick_replies = extract_quick_replies(bot_response)
-
-        # Log conversation to database
         log_conversation(user_message, bot_response, user_location)
 
-        return jsonify({
-            'success': True,
-            'response': bot_response,
-            'quick_replies': quick_replies
-        }), 200
+        return jsonify({'success': True, 'response': bot_response, 'quick_replies': extract_quick_replies(bot_response)}), 200
 
     except Exception as e:
         import traceback
         traceback.print_exc()
-        return jsonify({
-            "success": False,
-            "error": str(e),
-            "fallback": True
-        }), 500
+        return jsonify({"success": False, "error": str(e), "fallback": True}), 500
 
 
 def extract_quick_replies(text):
-    """
-    Extract quick reply options from bot response
-    """
-    quick_replies = []
-
-    if "would you like" in text.lower() or "do you need" in text.lower():
-        lines = text.split('\n')
-        for i, line in enumerate(lines):
-            if "would you like" in line.lower() or "do you need" in line.lower():
-                for j in range(i+1, min(i+5, len(lines))):
-                    option_line = lines[j].strip()
-                    if option_line and any(option_line.startswith(p) for p in ['•', '-', '1.', '2.', '3.']):
-                        option = option_line.lstrip('•-123. ').strip()
-                        if 5 < len(option) < 50:
-                            quick_replies.append(option)
-                break
-
-    if not quick_replies:
-        text_lower = text.lower()
-        if 'emergency' in text_lower:
-            quick_replies = ['Yes, send help', 'Find shelter', 'Medical assistance']
-        elif 'shelter' in text_lower:
-            quick_replies = ['Get directions', 'Check capacity', 'Other options']
-        elif 'food' in text_lower or 'water' in text_lower:
-            quick_replies = ['Nearest location', 'Distribution times', 'Special needs']
-        elif 'medical' in text_lower or 'hospital' in text_lower:
-            quick_replies = ['Call ambulance', 'Nearest hospital', 'First aid tips']
-        else:
-            quick_replies = ['Emergency help', 'Find resources', 'Safety tips']
-
-    return quick_replies[:4]
+    text_lower = text.lower()
+    if 'emergency' in text_lower:
+        return ['Yes, send help', 'Find shelter', 'Medical assistance']
+    elif 'shelter' in text_lower:
+        return ['Get directions', 'Check capacity', 'Other options']
+    elif 'food' in text_lower or 'water' in text_lower:
+        return ['Nearest location', 'Distribution times', 'Special needs']
+    elif 'medical' in text_lower or 'hospital' in text_lower:
+        return ['Call ambulance', 'Nearest hospital', 'First aid tips']
+    return ['Emergency help', 'Find resources', 'Safety tips']
 
 
 def log_conversation(user_msg, bot_msg, location):
-    """
-    Log conversation to database for analytics
-    """
     try:
         conn = sqlite3.connect(DB_PATH)
         c = conn.cursor()
-
-        c.execute('''INSERT INTO chatbot_logs 
-                    (user_message, bot_response, latitude, longitude, created_at)
+        c.execute('''INSERT INTO chatbot_logs (user_message, bot_response, latitude, longitude, created_at)
                     VALUES (?, ?, ?, ?, ?)''',
                   (user_msg, bot_msg,
                    location.get('latitude') if location else None,
                    location.get('longitude') if location else None,
                    datetime.now().isoformat()))
-
         conn.commit()
         conn.close()
-        print("✅ Conversation logged")
     except Exception as e:
         print(f"⚠️ Logging error: {e}")
 
-
 # ==============================
-# Damage Assessment Endpoint
+# Damage Assessment
 # ==============================
 
 @app.route('/api/damage/assess', methods=['POST'])
 def assess_damage():
+    if not damage_assessor:
+        return jsonify({'success': False, 'error': 'Damage assessment model not loaded.'}), 503
+
     try:
         if 'image' not in request.files:
             return jsonify({'success': False, 'error': 'No image file provided'}), 400
 
         file = request.files['image']
-
         if file.filename == '':
             return jsonify({'success': False, 'error': 'No file selected'}), 400
 
-        allowed = {'png', 'jpg', 'jpeg', 'webp'}
         ext = file.filename.rsplit('.', 1)[-1].lower()
-        if ext not in allowed:
-            return jsonify({'success': False, 'error': 'Invalid file type. Use JPG, PNG or WEBP'}), 400
+        if ext not in {'png', 'jpg', 'jpeg', 'webp'}:
+            return jsonify({'success': False, 'error': 'Invalid file type'}), 400
 
-        # Save temporarily
-        unique_name = f"{uuid.uuid4().hex}.{ext}"
-        save_path = os.path.join(UPLOAD_FOLDER, unique_name)
+        save_path = os.path.join(UPLOAD_FOLDER, f"{uuid.uuid4().hex}.{ext}")
         file.save(save_path)
 
         try:
@@ -547,19 +502,18 @@ def assess_damage():
                 os.remove(save_path)
 
         return jsonify({
-            'success':             True,
-            'predicted_label':     result['predicted_label'],
-            'damage_level':        result['damage_level'],
-            'confidence':          result['confidence'],
-            'color':               result['color'],
-            'all_probabilities':   result['all_probabilities'],
+            'success': True,
+            'predicted_label': result['predicted_label'],
+            'damage_level': result['damage_level'],
+            'confidence': result['confidence'],
+            'color': result['color'],
+            'all_probabilities': result['all_probabilities'],
             'gradcam_heatmap_b64': result['gradcam_heatmap_b64'],
         }), 200
 
     except Exception as e:
         print(f"Damage assessment error: {str(e)}")
-        return jsonify({'success': False, 'error': 'Assessment failed. Please try again.'}), 500
-
+        return jsonify({'success': False, 'error': 'Assessment failed.'}), 500
 
 # ==============================
 # Health Check
@@ -567,51 +521,32 @@ def assess_damage():
 
 @app.route('/api/health', methods=['GET'])
 def health():
+    print(f"✅ Health check received from {request.remote_addr}")
     return jsonify({
-        'status':      'healthy',
-        'timestamp':   datetime.now().isoformat(),
-        'db':          'connected' if os.path.exists(DB_PATH) else 'not found',
+        'status': 'healthy',
+        'timestamp': datetime.now().isoformat(),
+        'db': 'connected' if os.path.exists(DB_PATH) else 'not found',
         'resource_db': 'connected' if os.path.exists(RESOURCE_DB_PATH) else 'not found',
     }), 200
 
-
-# ==============================
-# Test Endpoint
-# ==============================
-
 @app.route('/api/chatbot/test', methods=['GET'])
 def test_chatbot():
-    """
-    Test endpoint to verify Groq is working
-    """
     if not groq_client:
-        return jsonify({
-            'success': False,
-            'error': 'Groq API key not configured',
-            'message': 'Please set GROQ_API_KEY environment variable'
-        }), 500
-
+        return jsonify({'success': False, 'error': 'Groq API key not configured'}), 500
     try:
         response = groq_client.chat.completions.create(
             model="llama-3.3-70b-versatile",
-            messages=[{"role": "user", "content": "Say 'Groq is working!' if you can read this."}],
+            messages=[{"role": "user", "content": "Say 'Groq is working!'"}],
             max_tokens=50
         )
-
-        return jsonify({
-            'success': True,
-            'message': 'Groq API is working!',
-            'response': response.choices[0].message.content
-        }), 200
+        return jsonify({'success': True, 'message': 'Groq API is working!', 'response': response.choices[0].message.content}), 200
     except Exception as e:
-        return jsonify({
-            'success': False,
-            'error': str(e)
-        }), 500
-
+        return jsonify({'success': False, 'error': str(e)}), 500
 
 # ==============================
+
 # Run Server
+
 # ==============================
 
 if __name__ == '__main__':
@@ -619,8 +554,8 @@ if __name__ == '__main__':
     print("🚀 RescueVision Backend with Real-Time Notifications")
     print("=" * 60)
     print("Server: http://localhost:5000")
-    print("Groq AI: " + ("✅ Enabled" if groq_client else "❌ Disabled (API key missing)"))
+    print("Groq AI: " + ("✅ Enabled" if groq_client else "❌ Disabled"))
     print("SocketIO: ✅ Enabled")
-    print("=" * 60 + "\n")
+    print("=" * 60)
 
-    socketio.run(app, debug=True, port=5000)  # ✅ socketio.run instead of app.run
+    socketio.run(app, host="0.0.0.0", port=5000, debug=True, use_reloader=False)

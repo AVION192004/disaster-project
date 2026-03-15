@@ -3,7 +3,7 @@ import React from "react";
 import ReactDOM from "react-dom/client";
 import "./index.css";
 import App from "./App";
-import { NotificationProvider } from './NotificationContext';// ✅ Added
+import { NotificationProvider } from './contexts/NotificationContext';// ✅ Added
 
 // Import service worker
 import * as serviceWorkerRegistration from "./serviceWorkerRegistration";

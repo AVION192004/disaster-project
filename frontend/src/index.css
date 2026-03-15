@@ -1,6 +1,65 @@
+/* ============================================================
+   Global Theme Variables — Dark/Light Mode
+   ============================================================ */
+
+/* ── Default (Dark) theme ── */
+:root {
+  --bg-primary:     #09090b;
+  --bg-secondary:   #0D1117;
+  --bg-card:        #13192b;
+  --bg-card-alt:    #1e293b;
+  --bg-input:       #0f172a;
+  --border:         #1e293b;
+  --border-light:   #334155;
+  --text-primary:   #f8fafc;
+  --text-secondary: #94a3b8;
+  --text-muted:     #475569;
+  --accent:         #3b82f6;
+  --accent-hover:   #2563eb;
+  --danger:         #ef4444;
+  --success:        #10b981;
+  --warning:        #f59e0b;
+  --shadow:         0 10px 30px rgba(0, 0, 0, 0.5);
+  --shadow-sm:      0 4px 12px rgba(0, 0, 0, 0.4);
+  --transition:     background 0.3s ease, color 0.3s ease, border-color 0.3s ease, box-shadow 0.3s ease;
+}
+
+/* ── Light theme ── */
+[data-theme="light"] {
+  --bg-primary:     #f1f5f9;
+  --bg-secondary:   #ffffff;
+  --bg-card:        #ffffff;
+  --bg-card-alt:    #f8fafc;
+  --bg-input:       #f1f5f9;
+  --border:         #e2e8f0;
+  --border-light:   #cbd5e1;
+  --text-primary:   #0f172a;
+  --text-secondary: #475569;
+  --text-muted:     #94a3b8;
+  --accent:         #2563eb;
+  --accent-hover:   #1d4ed8;
+  --danger:         #dc2626;
+  --success:        #059669;
+  --warning:        #d97706;
+  --shadow:         0 10px 30px rgba(0, 0, 0, 0.1);
+  --shadow-sm:      0 4px 12px rgba(0, 0, 0, 0.08);
+}
+
+/* ── Base reset ── */
+*, *::before, *::after { box-sizing: border-box; }
+
 body {
   margin: 0;
   padding: 0;
-  font-family: Arial, sans-serif;
-  background-color: #f4f4f4;
+  font-family: 'Inter', Arial, sans-serif;
+  background-color: var(--bg-secondary);
+  color: var(--text-primary);
+  transition: var(--transition);
+}
+
+/* Smooth transitions for common elements */
+a, button, input, select, textarea,
+[class*="card"], [class*="header"], [class*="nav"],
+[class*="modal"], [class*="panel"] {
+  transition: var(--transition);
 }

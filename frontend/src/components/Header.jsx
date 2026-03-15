@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import './Header.css';
-import NotificationBell from './NotificationBell'; // ✅ Added
+import NotificationBell from './NotificationBell';
 
 function Header() {
   const [scrolled, setScrolled] = useState(false);
@@ -20,18 +20,22 @@ function Header() {
     { to: '/features',           label: 'Features'          },
     { to: '/first-aid',          label: 'First Aid'         },
     { to: '/shelters',           label: 'Shelters'          },
-    { to: '/disaster-news', label: 'Disaster News' },
+    { to: '/disaster-news',      label: 'Disaster News'     },
     { to: '/officer/dashboard',  label: 'Dashboard'         }
   ];
 
   return (
     <header className={`header${scrolled ? ' header--scrolled' : ''}`}>
       <div className="header__inner">
-
-        {/* Logo */}
+        
+        {/* ✅ Logo with Image */}
         <div className="header__logo">
           <Link to="/" className="header__logo-link" aria-label="RescueVision Home">
-            <span className="header__logo-mark">RV</span>
+            <img 
+              src="/logo.png" 
+              alt="RescueVision Logo" 
+              className="header__logo-image"
+            />
             <span className="header__logo-text">RescueVision</span>
           </Link>
         </div>
@@ -54,10 +58,10 @@ function Header() {
 
         {/* Auth Actions */}
         <div className="header__actions">
-
-          {/* ✅ Notification Bell — added before SOS */}
+          {/* ✅ Notification Bell */}
           <NotificationBell />
-
+          
+          {/* ✅ SOS Emergency Button */}
           <Link
             to="/sos"
             className="btn btn--emergency header__action-link--sos"
@@ -65,24 +69,19 @@ function Header() {
           >
             🆘 SOS
           </Link>
-
           
-
           <Link to="/officer/login" className="header__action-link">
             <button className="btn btn--ghost" type="button">
               Sign In
             </button>
           </Link>
-
+          
           <Link to="/officer/register" className="header__action-link">
             <button className="btn btn--primary" type="button">
               Sign Up
             </button>
           </Link>
-        
-
         </div>
-
       </div>
     </header>
   );

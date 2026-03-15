@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import './Auth.css';
 
@@ -10,6 +10,37 @@ const OfficerLogin = () => {
   });
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
+  const [backendStatus, setBackendStatus] = useState('checking');
+  const [retryCount, setRetryCount] = useState(0);
+
+  // Check if backend is running
+  useEffect(() => {
+    checkBackendHealth();
+  }, []);
+
+  const checkBackendHealth = async () => {
+    try {
+      const response = await fetch('http://localhost:5000/api/health', {
+        method: 'GET',
+        timeout: 5000
+      });
+      if (response.ok) {
+        setBackendStatus('online');
+        setError('');
+      } else {
+        setBackendStatus('offline');
+      }
+    } catch (err) {
+      setBackendStatus('offline');
+      if (retryCount < 2) {
+        // Retry twice with 3-second delay
+        setTimeout(() => {
+          setRetryCount(retryCount + 1);
+          checkBackendHealth();
+        }, 3000);
+      }
+    }
+  };
 
   const handleChange = (e) => {
     setFormData({
@@ -20,6 +51,12 @@ const OfficerLogin = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    
+    if (backendStatus === 'offline') {
+      setError('❌ Backend server is not running. Please start the backend with: python backend/api.py');
+      return;
+    }
+
     setError('');
     setLoading(true);
 
@@ -43,7 +80,7 @@ const OfficerLogin = () => {
       }
     } catch (err) {
       console.error('Login error:', err);
-      setError('Network error. Please check if backend is running on http://localhost:5000');
+      setError('❌ Network error. Backend is not running on http://localhost:5000\n\nPlease run: python backend/api.py');
     } finally {
       setLoading(false);
     }
@@ -59,6 +96,21 @@ const OfficerLogin = () => {
         <h1 className="brand-name">Rescuevision</h1>
         <h2 className="auth-title">Officer Login</h2>
         <p className="auth-subtitle">Welcome back! 👋 Login to get started!</p>
+
+        {/* Backend Status Indicator */}
+        <div style={{
+          padding: '10px',
+          marginBottom: '15px',
+          borderRadius: '5px',
+          backgroundColor: backendStatus === 'online' ? '#d4edda' : '#f8d7da',
+          color: backendStatus === 'online' ? '#155724' : '#721c24',
+          textAlign: 'center',
+          fontSize: '14px'
+        }}>
+          {backendStatus === 'checking' && '⏳ Checking backend...'}
+          {backendStatus === 'online' && '✅ Backend is online'}
+          {backendStatus === 'offline' && '❌ Backend is offline - Start with: python backend/api.py'}
+        </div>
 
         {error && <div className="error-message">{error}</div>}
 
@@ -93,7 +145,11 @@ const OfficerLogin = () => {
             </span>
           </div>
 
-          <button type="submit" className="submit-btn" disabled={loading}>
+          <button 
+            type="submit" 
+            className="submit-btn" 
+            disabled={loading || backendStatus === 'offline'}
+          >
             {loading ? 'Logging in...' : 'Login'}
           </button>
 

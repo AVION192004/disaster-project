@@ -20,6 +20,7 @@ import ShelterFinder from "./components/ShelterFinder";
 import ReliefBot from "./components/ReliefBot";
 import DisasterNews from "./components/DisasterNews";
 import ReliefBotFloating from "./components/ReliefBotFloating";
+import ThemeToggle from "./components/ThemeToggle";
 
 const darkPage = {
   backgroundColor: "#0D1117",
@@ -180,6 +181,7 @@ function App() {
         </div>
         
         <ReliefBotFloating />
+        <ThemeToggle />
         
       </Router>
       
