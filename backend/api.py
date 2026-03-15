@@ -58,15 +58,20 @@ def init_db():
     conn = sqlite3.connect(DB_PATH)
     c = conn.cursor()
 
-    c.execute('''CREATE TABLE IF NOT EXISTS officers (
+    # Officers table
+    c.execute("""
+    CREATE TABLE IF NOT EXISTS officers (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         email TEXT UNIQUE NOT NULL,
         password TEXT NOT NULL,
         name TEXT NOT NULL,
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-    )''')
+    )
+    """)
 
-    c.execute('''CREATE TABLE IF NOT EXISTS disaster_reports (
+    # Disaster reports
+    c.execute("""
+    CREATE TABLE IF NOT EXISTS disaster_reports (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         name TEXT NOT NULL,
         location TEXT NOT NULL,
@@ -76,20 +81,23 @@ def init_db():
         reporter_phone TEXT,
         status TEXT DEFAULT 'Pending',
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-    )''')
+    )
+    """)
 
-    c.execute('''CREATE TABLE IF NOT EXISTS chatbot_logs (
+    # Chatbot logs
+    c.execute("""
+    CREATE TABLE IF NOT EXISTS chatbot_logs (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         user_message TEXT NOT NULL,
         bot_response TEXT NOT NULL,
         latitude REAL,
         longitude REAL,
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-    )''')
-    
+    )
+    """)
 
-  # ✅ SHELTERS TABLE
-    c.execute('''
+    # Shelters table
+    c.execute("""
     CREATE TABLE IF NOT EXISTS shelters (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         name TEXT,
@@ -98,10 +106,29 @@ def init_db():
         capacity INTEGER,
         available INTEGER
     )
-    ''')
+    """)
+
+    # Insert default shelters
+    c.execute("SELECT COUNT(*) FROM shelters")
+    count = c.fetchone()[0]
+
+    if count == 0:
+        shelters = [
+            ("Community Hall Shelter", 9.9816, 76.2999, 200, 150),
+            ("Government School Shelter", 9.9852, 76.3024, 300, 220),
+            ("Relief Camp Stadium", 9.9780, 76.2950, 500, 400)
+        ]
+
+        c.executemany(
+            "INSERT INTO shelters (name, latitude, longitude, capacity, available) VALUES (?, ?, ?, ?, ?)",
+            shelters
+        )
+
     conn.commit()
     conn.close()
+
     print("✅ Database initialized")
+
 
 init_db()
 

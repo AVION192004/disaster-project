@@ -40,13 +40,13 @@ export default function ShelterFinder() {
     });
 
     // Fetch shelters
-    fetch("http://localhost:5000/api/shelters")
+   fetch("http://127.0.0.1:5000/api/shelters")
       .then((res) => res.json())
       .then((data) => setShelters(data))
       .catch(() => console.log("No shelters yet"));
 
     // Fetch disaster reports
-    fetch("http://localhost:5000/api/disaster/reports")
+   fetch("http://127.0.0.1:5000/api/disaster/reports")
       .then((res) => res.json())
       .then((data) => {
         if (data.success) {

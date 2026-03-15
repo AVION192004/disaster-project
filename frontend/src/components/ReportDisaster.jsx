@@ -605,21 +605,16 @@ export default function ReportDisaster() {
             <p style={styles.warningText}><strong>Emergency?</strong> If this is a life-threatening emergency, please call emergency services (911) immediately before submitting this report.</p>
           </div>
 
-          <button onClick={handleSubmit} disabled={isSubmitting} style={isSubmitting ? {...styles.submitBtn, ...styles.submitBtnDisabled} : styles.submitBtn}>
-            {isSubmitting ? (
-              <>
-                <div style={styles.spinner} />
-                Submitting Report...
-              </>
-            ) : (
-              <>
-                <Send size={20} />
-                Submit Disaster Report
-              </>
-            )}
-          </button>
         </div>
       </div>
+      <style dangerouslySetInnerHTML={{__html: `
+        @keyframes spin { 100% { transform: rotate(360deg); } }
+        .hover-card:hover { transform: translateY(-2px); filter: brightness(1.2); }
+        .hover-btn:hover { background: #334155 !important; }
+        .hover-area:hover { border-color: #3b82f6 !important; background: rgba(59, 130, 246, 0.05) !important; }
+        .hover-call:hover { background: rgba(16, 185, 129, 0.2) !important; color: white !important; }
+        .main-submit:hover:not(:disabled) { background: #dc2626 !important; transform: translateY(-2px); box-shadow: 0 6px 20px 0 rgba(239, 68, 68, 0.5) !important; }
+      `}} />
     </div>
   );
 }
