@@ -147,7 +147,7 @@ function App() {
             }
           />
 
-          {/* Sign Up */}
+          {/* Auth Pages */}
           <Route
             path="/signup"
             element={
@@ -156,8 +156,6 @@ function App() {
               </div>
             }
           />
-
-          {/* Sign In */}
           <Route
             path="/signin"
             element={
@@ -167,7 +165,7 @@ function App() {
             }
           />
 
-          {/* Dashboard */}
+          {/* Dashboard (Protected) */}
           <Route
             path="/dashboard"
             element={
@@ -177,7 +175,7 @@ function App() {
             }
           />
 
-          {/* Officer Register */}
+          {/* Officer Dashboard & Auth */}
           <Route
             path="/officer/register"
             element={
@@ -186,8 +184,6 @@ function App() {
               </div>
             }
           />
-
-          {/* Officer Login */}
           <Route
             path="/officer/login"
             element={
@@ -196,12 +192,24 @@ function App() {
               </div>
             }
           />
+          <Route 
+            path="/officer/dashboard" 
+            element={
+              <div style={darkPage}>
+                <OfficerDashboard />
+              </div>
+            } 
+          />
 
-          {/* Officer Dashboard */}
-          <Route path="/officer/dashboard" element={<OfficerDashboard />} />
-
-          {/* Admin Dashboard */}
-          <Route path="/admin/disaster" element={<AdminDisaster />} />
+          {/* Admin Panels */}
+          <Route 
+            path="/admin/disaster" 
+            element={
+              <div style={darkPage}>
+                <AdminDisaster />
+              </div>
+            } 
+          />
         </Routes>
       </div>
 
