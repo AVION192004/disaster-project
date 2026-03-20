@@ -27,8 +27,7 @@ function applyTheme(dark) {
   } else {
     // saturate(4) + brightness(1.2) restores vibrancy of reds/purples/oranges
     // that get darkened by invert(1) hue-rotate(180deg)
-    root.style.filter = 'invert(1) hue-rotate(180deg) saturate(4) brightness(1.2)';
-    root.classList.add('lm');
+root.style.filter = 'invert(1) hue-rotate(180deg)';    root.classList.add('lm');
   }
 }
 
