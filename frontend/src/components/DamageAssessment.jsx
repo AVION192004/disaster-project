@@ -5,7 +5,7 @@ import './DamageAssessment.css';
 /* ===============================
    CHANGE THIS TO YOUR LAPTOP IP
    =============================== */
-const API_BASE = "http://192.168.1.35:5000"; // <-- CHANGE THIS
+const API_BASE = "http://localhost:5000"; // Changed to localhost for local development
 
 const mapDamageToSeverity = (predicted_label, confidence) => {
   switch (predicted_label) {

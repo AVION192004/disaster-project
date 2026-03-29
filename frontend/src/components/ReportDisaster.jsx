@@ -133,23 +133,27 @@ export default function ReportDisaster() {
     setError('');
 
     try {
+      const formToSend = new FormData();
+      formToSend.append('name', formData.disasterType);
+      formToSend.append('location', formData.location);
+      formToSend.append('description', formData.description);
+      formToSend.append('severity', formData.severity);
+      formToSend.append('reporter_name', formData.reporterName);
+      formToSend.append('reporter_phone', formData.reporterPhone);
+      formToSend.append('reporter_email', formData.reporterEmail);
+      
+      const combinedCasualties = parseInt(formData.injured || 0) + parseInt(formData.deceased || 0) + parseInt(formData.missing || 0);
+      formToSend.append('casualties', combinedCasualties);
+      formToSend.append('affected_people', parseInt(formData.displaced || 0));
+
+      selectedFiles.forEach((file) => {
+        formToSend.append('images', file);
+      });
+
       const response = await fetch('http://localhost:5000/api/disaster/report', {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          name: formData.disasterType,
-          location: formData.location,
-          description: formData.description,
-          severity: formData.severity,
-          reporter_name: formData.reporterName,
-          reporter_phone: formData.reporterPhone,
-          reporter_email: formData.reporterEmail,
-          // Sending combined casualties since backend expects single field
-          casualties: parseInt(formData.injured || 0) + parseInt(formData.deceased || 0) + parseInt(formData.missing || 0),
-          affected_people: parseInt(formData.displaced || 0)
-        }),
+        body: formToSend,
+        // No Content-Type header - browser will set it with boundary for FormData
       });
 
       const data = await response.json();

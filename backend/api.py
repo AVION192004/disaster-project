@@ -47,19 +47,13 @@ GROQ_API_KEY = os.getenv("GROQ_API_KEY")
 TELEGRAM_TOKEN = os.getenv("TELEGRAM_BOT_TOKEN")
 TELEGRAM_CHAT_ID = os.getenv("TELEGRAM_CHAT_ID")
 
-load_dotenv()  # Load from .env file
-
-# DIRECT FIX - Hardcode for now
-GROQ_API_KEY = "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 "
-
-print(f"DEBUG: GROQ_API_KEY = {GROQ_API_KEY[:20]}...")  # Should print first 20 chars
-
 if not GROQ_API_KEY:
     print("⚠️ WARNING: GROQ_API_KEY not found in environment variables")
 else:
     print("✅ GROQ_API_KEY loaded successfully")
 
 groq_client = Groq(api_key=GROQ_API_KEY) if GROQ_API_KEY else None
+print("✅ GROQ ready" if groq_client else "⚠️ GROQ not configured (using fallback)")
 
 # ==============================
 # Database Initialization
@@ -85,6 +79,10 @@ def init_db():
         severity TEXT DEFAULT 'Medium',
         reporter_name TEXT DEFAULT 'Anonymous',
         reporter_phone TEXT,
+        reporter_email TEXT,
+        casualties INTEGER DEFAULT 0,
+        affected_people INTEGER DEFAULT 0,
+        images TEXT,
         status TEXT DEFAULT 'Pending',
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
     )""")
@@ -331,37 +329,82 @@ def send_telegram_alert(message):
 
 @app.route('/api/disaster/report', methods=['POST'])
 def report_disaster():
-    data = request.get_json()
+    try:
+        # Handle multipart/form-data
+        name = request.form.get('name')
+        location = request.form.get('location')
+        description = request.form.get('description', '')
+        severity = request.form.get('severity', 'Medium')
+        reporter_name = request.form.get('reporter_name', 'Anonymous')
+        reporter_phone = request.form.get('reporter_phone', '')
+        reporter_email = request.form.get('reporter_email', '')
+        
+        casualties_str = request.form.get('casualties', '0')
+        affected_people_str = request.form.get('affected_people', '0')
+        
+        # Safe integer conversion
+        try:
+            casualties = int(casualties_str) if casualties_str else 0
+        except ValueError:
+            casualties = 0
+            
+        try:
+            affected_people = int(affected_people_str) if affected_people_str else 0
+        except ValueError:
+            affected_people = 0
 
-    name = data.get('name')
-    location = data.get('location')
-    description = data.get('description')
-    severity = data.get('severity', 'Medium')
-    reporter_name = data.get('reporter_name', 'Anonymous')
-    reporter_phone = data.get('reporter_phone', '')
+        if not name or not location:
+            return jsonify({'success': False, 'error': 'Name and location required'}), 400
 
-    if not name or not location:
-        return jsonify({'success': False, 'error': 'Name and location required'}), 400
+        # Handle image uploads
+        uploaded_images = []
+        if 'images' in request.files:
+            files = request.files.getlist('images')
+            for file in files:
+                if file and file.filename != '':
+                    ext = file.filename.rsplit('.', 1)[-1].lower()
+                    filename = f"{uuid.uuid4().hex}.{ext}"
+                    save_path = os.path.join(UPLOAD_FOLDER, filename)
+                    file.save(save_path)
+                    uploaded_images.append(filename)
+        
+        images_str = ",".join(uploaded_images) if uploaded_images else None
 
-    conn = sqlite3.connect(DB_PATH)
-    c = conn.cursor()
-    c.execute('''INSERT INTO disaster_reports 
-                (name, location, description, severity, reporter_name, reporter_phone) 
-                VALUES (?, ?, ?, ?, ?, ?)''',
-              (name, location, description, severity, reporter_name, reporter_phone))
-    report_id = c.lastrowid
-    conn.commit()
-    conn.close()
+        # Database Insertion
+        conn = sqlite3.connect(DB_PATH)
+        c = conn.cursor()
+        c.execute('''INSERT INTO disaster_reports 
+                    (name, location, description, severity, reporter_name, reporter_phone, reporter_email, casualties, affected_people, images) 
+                    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)''',
+                  (name, location, description, severity, reporter_name, reporter_phone, reporter_email, casualties, affected_people, images_str))
+        report_id = c.lastrowid
+        conn.commit()
+        conn.close()
 
-    send_telegram_alert(f"🚨 NEW DISASTER REPORT\n\n📍 Location: {location}\n🔥 Type: {name}\n⚠️ Severity: {severity}\n\n👤 Reporter: {reporter_name}\n📞 Phone: {reporter_phone or 'Not provided'}")
+        # Alerts and Notifications
+        alert_msg = f"🚨 NEW DISASTER REPORT\n\n📍 Location: {location}\n🔥 Type: {name}\n⚠️ Severity: {severity}\n\n👤 Reporter: {reporter_name}\n📞 Phone: {reporter_phone or 'Not provided'}"
+        if casualties:
+            alert_msg += f"\n🚑 Casualties: {casualties}"
+        if affected_people:
+            alert_msg += f"\n🏠 Affected: {affected_people}"
+        
+        send_telegram_alert(alert_msg)
 
-    socketio.emit('new_disaster_report', {
-        'id': report_id, 'name': name, 'location': location,
-        'severity': severity, 'reporter_name': reporter_name,
-        'timestamp': datetime.now().isoformat()},
-    )
+        socketio.emit('new_disaster_report', {
+            'id': report_id, 'name': name, 'location': location,
+            'severity': severity, 'reporter_name': reporter_name,
+            'casualties': casualties, 'affected_people': affected_people,
+            'timestamp': datetime.now().isoformat()
+        })
 
-    return jsonify({'success': True, 'message': 'Report submitted', 'report_id': report_id}), 201
+        print(f"✅ Report #{report_id} created successfully")
+        return jsonify({'success': True, 'message': 'Report submitted', 'report_id': report_id}), 201
+
+    except Exception as e:
+        import traceback
+        traceback.print_exc()
+        print(f"❌ Report submission error: {str(e)}")
+        return jsonify({'success': False, 'error': f'Server error: {str(e)}'}), 500
 
 
 @app.route('/api/disaster/report/<int:report_id>', methods=['PUT'])
@@ -400,7 +443,8 @@ def get_reports():
     return jsonify({'success': True, 'reports': [
         {'id': r[0], 'name': r[1], 'location': r[2], 'description': r[3],
          'severity': r[4], 'reporter_name': r[5], 'reporter_phone': r[6],
-         'status': r[7], 'created_at': r[8]} for r in rows
+         'reporter_email': r[7], 'casualties': r[8], 'affected_people': r[9],
+         'images': r[10], 'status': r[11], 'created_at': r[12]} for r in rows
     ]})
 
 # ==============================
