@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useCallback } from "react";
 import "./ReportsManagement.css";
 
-const STATUS_OPTIONS = ["Pending", "Active", "Assigned", "Resolved"];
+const STATUS_OPTIONS = ["Pending", "In Progress", "Completed"];
 
 const severityColor = {
   Low:      { text: "#22C55E", bg: "rgba(34,197,94,0.1)",   border: "rgba(34,197,94,0.2)"  },
@@ -11,10 +11,9 @@ const severityColor = {
 };
 
 const statusColor = {
-  Pending:  { text: "#F59E0B", bg: "rgba(245,158,11,0.1)",  border: "rgba(245,158,11,0.2)" },
-  Active:   { text: "#EF4444", bg: "rgba(239,68,68,0.1)",   border: "rgba(239,68,68,0.2)"  },
-  Assigned: { text: "#6B48FF", bg: "rgba(107,72,255,0.1)",  border: "rgba(107,72,255,0.2)" },
-  Resolved: { text: "#22C55E", bg: "rgba(34,197,94,0.1)",   border: "rgba(34,197,94,0.2)"  },
+  Pending:      { text: "#F59E0B", bg: "rgba(245,158,11,0.1)",  border: "rgba(245,158,11,0.2)" },
+  "In Progress":{ text: "#3B82F6", bg: "rgba(59,130,246,0.1)",  border: "rgba(59,130,246,0.2)" },
+  Completed:    { text: "#22C55E", bg: "rgba(34,197,94,0.1)",   border: "rgba(34,197,94,0.2)"  },
 };
 
 const Badge = ({ label, colorMap }) => {

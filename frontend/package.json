@@ -4,13 +4,17 @@
   "private": true,
   "dependencies": {
     "@react-google-maps/api": "^2.20.8",
+    "@react-three/drei": "^10.0.0",
+    "@react-three/fiber": "^9.0.0",
     "axios": "^1.7.9",
     "chart.js": "^4.5.1",
     "cra-template": "1.2.0",
+    "framer-motion": "^12.4.10",
     "leaflet": "^1.9.4",
     "leaflet-control-geocoder": "^3.3.1",
     "leaflet-routing-machine": "^3.2.12",
     "lucide-react": "^0.562.0",
+    "maath": "^0.10.8",
     "react": "^19.0.0",
     "react-chartjs-2": "^5.3.1",
     "react-dom": "^19.0.0",
@@ -19,8 +23,10 @@
     "react-router-dom": "^7.11.0",
     "react-scripts": "5.0.1",
     "socket.io-client": "^4.8.3",
+    "three": "^0.183.2",
     "web-vitals": "^4.2.4",
-    "workbox-webpack-plugin": "^7.4.0"
+    "workbox-webpack-plugin": "^7.4.0",
+    "localforage": "^1.10.0"
   },
   "scripts": {
     "start": "react-scripts start",

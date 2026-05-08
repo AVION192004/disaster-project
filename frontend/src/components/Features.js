@@ -1,86 +1,83 @@
 import React from 'react';
+import { motion } from 'framer-motion';
 import './Features.css';
 
 const featureItems = [
   {
-    id: 'damage-assessment',
-    icon: (
-      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true">
-        <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
-      </svg>
-    ),
-    tag: 'AI-Powered',
-    title: 'Damage Assessment',
-    description:
-      'Satellite imagery analysis quantifies damage severity and affected area extent within minutes of a reported incident.',
+    id: 1,
+    icon: '🛰️',
+    tag: 'AI Core',
+    title: 'EfficientNet-B0 Classification',
+    description: 'Ground-level image classification into No Damage, Major Damage, or Destroyed using a transfer-learned EfficientNet-B0 model trained on 4,373 real disaster images.'
   },
   {
-    id: 'smart-allocation',
-    icon: (
-      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true">
-        <path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/>
-      </svg>
-    ),
-    tag: 'DQN Engine',
-    title: 'Smart Allocation',
-    description:
-      'Deep Q-Network routing optimises distribution of rescue personnel, vehicles, and supplies based on real-time severity scores.',
+    id: 2,
+    icon: '🤖',
+    tag: 'Reinforcement Learning',
+    title: 'DQN Resource Allocation',
+    description: 'A Deep Q-Network agent optimally dispatches personnel, vehicles, and equipment by cross-referencing damage severity with available inventory in real time.'
   },
   {
-    id: 'realtime-mapping',
-    icon: (
-      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true">
-        <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/>
-        <circle cx="12" cy="10" r="3"/>
-      </svg>
-    ),
-    tag: 'Live',
-    title: 'Real-time Mapping',
-    description:
-      'Interactive geospatial layers display incident zones, severity gradients, and active rescue operations updated every 30 seconds.',
+    id: 3,
+    icon: '📡',
+    tag: 'Real-Time',
+    title: 'Live Incident Tracking',
+    description: 'WebSocket-powered live feed of incoming disaster reports, status changes, and officer updates — all visible on an interactive map with custom severity markers.'
   },
   {
-    id: 'officer-coordination',
-    icon: (
-      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true">
-        <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>
-        <circle cx="9" cy="7" r="4"/>
-        <path d="M23 21v-2a4 4 0 0 0-3-3.87"/>
-        <path d="M16 3.13a4 4 0 0 1 0 7.75"/>
-      </svg>
-    ),
-    tag: 'Multi-Agency',
-    title: 'Officer Coordination',
-    description:
-      'Unified command view enables seamless communication between field officers, dispatch, and agency leadership across jurisdictions.',
+    id: 4,
+    icon: '🗺️',
+    tag: 'Geospatial',
+    title: 'Shelter Finder & Routing',
+    description: 'Haversine-based nearest-shelter calculation with Leaflet map integration, geocoding, and turn-by-turn routing to guide displaced civilians to safety.'
   },
   {
-    id: 'analytics-dashboard',
-    icon: (
-      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true">
-        <path d="M3 3v18h18"/>
-        <path d="m19 9-5 5-4-4-3 3"/>
-      </svg>
-    ),
-    tag: 'Reporting',
-    title: 'Analytics Dashboard',
-    description:
-      'Track response times, resource utilisation rates, and incident resolution metrics with exportable reports for compliance audits.',
+    id: 5,
+    icon: '💬',
+    tag: 'AI Assistant',
+    title: 'Relief Bot (Groq LLaMA)',
+    description: 'A context-aware AI chatbot powered by Groq LLaMA-3.3-70B providing emergency guidance, mental health support, and location-aware shelter recommendations.'
   },
   {
-    id: 'instant-alerts',
-    icon: (
-      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true">
-        <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/>
-        <path d="M13.73 21a2 2 0 0 1-3.46 0"/>
-      </svg>
-    ),
-    tag: 'Push Alerts',
-    title: 'Instant Alerts',
-    description:
-      'Geo-fenced push notifications route to the nearest available officers automatically when new incidents are confirmed.',
+    id: 6,
+    icon: '🚨',
+    tag: 'Alerting',
+    title: 'Multi-Channel Alerts',
+    description: 'Instant Telegram push notifications and in-app broadcast alerts inform all active officers the moment a new disaster is reported or a status changes.'
+  },
+  {
+    id: 7,
+    icon: '🔐',
+    tag: 'Security',
+    title: 'JWT Officer Authentication',
+    description: 'Role-based access control with JWT tokens, bcrypt password hashing, and a dedicated officer registration / login flow to keep the command interface secure.'
+  },
+  {
+    id: 8,
+    icon: '📊',
+    tag: 'Analytics',
+    title: 'Command Dashboard & Exports',
+    description: 'A full officer command dashboard with severity trends, resolution rate analytics, advanced filtering, and one-click CSV / JSON report exports.'
   },
 ];
+
+const containerVariants = {
+  hidden: { opacity: 0 },
+  visible: {
+    opacity: 1,
+    transition: {
+      staggerChildren: 0.1,
+    },
+  },
+};
+
+const itemVariants = {
+  hidden: { y: 20, opacity: 0 },
+  visible: {
+    y: 0,
+    opacity: 1,
+  },
+};
 
 const Features = () => {
   return (
@@ -88,20 +85,33 @@ const Features = () => {
       <div className="features-inner">
 
         {/* Section header */}
-        <header className="features-header">
+        <motion.header 
+          className="features-header"
+          initial={{ opacity: 0, y: -20 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true }}
+          transition={{ duration: 0.6 }}
+        >
           <span className="features-eyebrow">Platform Capabilities</span>
           <h2 id="features-heading" className="features-title">
             Comprehensive{' '}
-            <span className="features-title__accent">Disaster Management</span>
+            <span className="features-title__accent text-glow">Disaster Management</span>
           </h2>
           <p className="features-subtitle">
             AI-powered analysis, real-time coordination, and multi-agency tooling —
             designed to the operational standards of government emergency response.
           </p>
-        </header>
+        </motion.header>
 
         {/* Features grid */}
-        <div className="features-grid" role="list">
+        <motion.div 
+          className="features-grid" 
+          role="list"
+          variants={containerVariants}
+          initial="hidden"
+          whileInView="visible"
+          viewport={{ once: true }}
+        >
           {featureItems.map(({ id, icon, tag, title, description }) => (
             <FeatureCard
               key={id}
@@ -111,24 +121,27 @@ const Features = () => {
               description={description}
             />
           ))}
-        </div>
+        </motion.div>
 
         {/* Bottom compliance strip */}
-        <div className="features-compliance" aria-label="Compliance certifications">
-          <ComplianceBadge label="Secure Authentication
-" />
+        <motion.div 
+          className="features-compliance glass" 
+          aria-label="Compliance certifications"
+          initial={{ opacity: 0 }}
+          whileInView={{ opacity: 1 }}
+          viewport={{ once: true }}
+          transition={{ delay: 0.5 }}
+        >
+          <ComplianceBadge label="Secure Authentication" />
           <span className="features-compliance__divider" aria-hidden="true" />
-          <ComplianceBadge label="Encrypted Data Transmission (HTTPS)
-" />
+          <ComplianceBadge label="Encrypted Data Transmission (HTTPS)" />
           <span className="features-compliance__divider" aria-hidden="true" />
-          <ComplianceBadge label="Role-Based Access Control
-" />
+          <ComplianceBadge label="Role-Based Access Control" />
           <span className="features-compliance__divider" aria-hidden="true" />
-          <ComplianceBadge label="Cloud Deployment Ready
-" />
+          <ComplianceBadge label="Cloud Deployment Ready" />
           <span className="features-compliance__divider" aria-hidden="true" />
           <ComplianceBadge label="AI-Powered Decision Support" />
-        </div>
+        </motion.div>
 
       </div>
     </section>
@@ -138,14 +151,19 @@ const Features = () => {
 /* ── Sub-components ───────────────────────────────────────── */
 
 const FeatureCard = ({ icon, tag, title, description }) => (
-  <article className="feat-card" role="listitem">
+  <motion.article 
+    className="feat-card glass-card tilt-3d" 
+    role="listitem"
+    variants={itemVariants}
+    whileHover={{ y: -10, rotateX: 5, rotateY: 5, transition: { duration: 0.2 } }}
+  >
     <div className="feat-card__header">
-      <div className="feat-card__icon" aria-hidden="true">{icon}</div>
-      <span className="feat-card__tag">{tag}</span>
+      <div className="feat-card__icon text-glow" aria-hidden="true">{icon}</div>
+      <span className="feat-card__tag glass">{tag}</span>
     </div>
     <h3 className="feat-card__title">{title}</h3>
     <p className="feat-card__description">{description}</p>
-  </article>
+  </motion.article>
 );
 
 const ComplianceBadge = ({ label }) => (

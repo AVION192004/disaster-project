@@ -7,8 +7,9 @@ function SignUp({ onSignIn }) {
 
   const handleSignUp = (e) => {
     e.preventDefault();
-    onSignIn();
-    navigate("/officer/dashboard");
+    // onSignIn prop is optional — guard before calling
+    if (typeof onSignIn === 'function') onSignIn();
+    navigate("/officer/register");
   };
 
   return (

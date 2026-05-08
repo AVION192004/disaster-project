@@ -1,0 +1,23 @@
+Traceback (most recent call last):
+  File "c:\Users\RESHMA VARGHESE\Desktop\disaster-assessment\backend\api.py", line 36, in <module>
+    damage_assessor = DamageAssessor('best_model.pth')
+  File "c:\Users\RESHMA VARGHESE\Desktop\disaster-assessment\backend\inference_damage.py", line 28, in __init__
+    self.model, self.class_names = self._load_model(model_path)
+  File "c:\Users\RESHMA VARGHESE\Desktop\disaster-assessment\backend\inference_damage.py", line 41, in _load_model
+    checkpoint = torch.load(path, map_location=self.device)
+  File "C:\Users\RESHMA VARGHESE\AppData\Local\Programs\Python\Python310\lib\site-packages\torch\serialization.py", line 1500, in load
+    with _open_file_like(f, "rb") as opened_file:
+  File "C:\Users\RESHMA VARGHESE\AppData\Local\Programs\Python\Python310\lib\site-packages\torch\serialization.py", line 768, in _open_file_like
+    return _open_file(name_or_buffer, mode)
+  File "C:\Users\RESHMA VARGHESE\AppData\Local\Programs\Python\Python310\lib\site-packages\torch\serialization.py", line 749, in __init__
+    super().__init__(open(name, mode))  # noqa: SIM115
+FileNotFoundError: [Errno 2] No such file or directory: 'best_model.pth'
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "c:\Users\RESHMA VARGHESE\Desktop\disaster-assessment\backend\api.py", line 38, in <module>
+    print(f"\u26a0\ufe0f Warning: Could not load DamageAssessor model: {e}")
+  File "C:\Users\RESHMA VARGHESE\AppData\Local\Programs\Python\Python310\lib\encodings\cp1252.py", line 19, in encode
+    return codecs.charmap_encode(input,self.errors,encoding_table)[0]
+UnicodeEncodeError: 'charmap' codec can't encode characters in position 0-1: character maps to <undefined>

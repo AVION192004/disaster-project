@@ -1,21 +1,29 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
+import { motion } from 'framer-motion';
+import ThreeScene from './ThreeScene';
 import './HeroSection.css';
 
 const HeroSection = () => {
   const navigate = useNavigate();
 
   return (
-    <div className="hero-container">
-
+    <div className="hero-container" style={{ position: 'relative', overflow: 'hidden' }}>
+      <ThreeScene />
+      
       {/* ── Hero Main ─────────────────────────────────────── */}
-      <section className="hero-main-section" aria-labelledby="hero-heading">
+      <section className="hero-main-section" aria-labelledby="hero-heading" style={{ position: 'relative', zIndex: 1 }}>
         <div className="hero-layout">
 
           {/* Left column — copy */}
-          <div className="hero-copy">
+          <motion.div 
+            className="hero-copy"
+            initial={{ opacity: 0, x: -50 }}
+            animate={{ opacity: 1, x: 0 }}
+            transition={{ duration: 0.8 }}
+          >
 
-            <div className="hero-badge" aria-label="Platform type">
+            <div className="hero-badge glass" aria-label="Platform type">
               <span className="hero-badge__dot" aria-hidden="true" />
               <svg
                 className="hero-badge__icon"
@@ -32,7 +40,7 @@ const HeroSection = () => {
               <span>AI-Powered Disaster Response</span>
             </div>
 
-            <h1 id="hero-heading" className="hero-title">
+            <h1 id="hero-heading" className="hero-title text-glow">
               Empowering Communities Through{' '}
               <span className="hero-title__accent">Effective Disaster Response</span>
             </h1>
@@ -45,14 +53,14 @@ const HeroSection = () => {
 
             <div className="hero-actions">
               <button
-                className="hero-btn hero-btn--primary"
+                className="hero-btn hero-btn--primary btn-3d"
                 type="button"
                 onClick={() => navigate('/damage-assessment')}
               >
                 Run Assessment
               </button>
               <button
-                className="hero-btn hero-btn--secondary"
+                className="hero-btn hero-btn--secondary glass"
                 type="button"
                 onClick={() => navigate('/features')}
               >
@@ -66,10 +74,16 @@ const HeroSection = () => {
               <strong>98%+</strong>&nbsp;validation accuracy
             </p>
 
-          </div>
+          </motion.div>
 
           {/* Right column — dashboard preview panel */}
-          <div className="hero-panel" aria-label="Platform dashboard preview">
+          <motion.div 
+            className="hero-panel glass-card tilt-3d" 
+            aria-label="Platform dashboard preview"
+            initial={{ opacity: 0, y: 50, rotateX: 10 }}
+            animate={{ opacity: 1, y: 0, rotateX: 0 }}
+            transition={{ duration: 0.8, delay: 0.2 }}
+          >
             <div className="hero-panel__topbar">
               <span className="hero-panel__dot hero-panel__dot--red" />
               <span className="hero-panel__dot hero-panel__dot--amber" />
@@ -121,25 +135,15 @@ const HeroSection = () => {
                   description="EfficientNet-B0 ground-level damage classification"
                   metric="98%+ accuracy"
                 />
-                <PanelCard
-                  icon={
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true">
-                      <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
-                    </svg>
-                  }
-                  title="Officer Network"
-                  description="Coordinate rescue officers across regions"
-                  metric="Secure login system"
-                />
               </div>
             </div>
-          </div>
+          </motion.div>
 
         </div>
       </section>
 
       {/* ── Statistics Bar ────────────────────────────────── */}
-      <section className="stats-bar" aria-label="Platform statistics">
+      <section className="stats-bar glass" aria-label="Platform statistics" style={{ position: 'relative', zIndex: 1 }}>
         <div className="stats-bar__inner">
           <StatItem number="3"     label="Damage Classes" />
           <span className="stats-bar__divider" aria-hidden="true" />
@@ -158,14 +162,14 @@ const HeroSection = () => {
 /* ── Sub-components ───────────────────────────────────────── */
 
 const StatusPill = ({ color, label }) => (
-  <span className={`status-pill status-pill--${color}`}>
+  <span className={`status-pill status-pill--${color} glass`}>
     <span className="status-pill__dot" aria-hidden="true" />
     {label}
   </span>
 );
 
 const PanelCard = ({ icon, title, description, metric }) => (
-  <div className="panel-card">
+  <div className="panel-card glass" style={{ border: 'none', background: 'rgba(255,255,255,0.05)' }}>
     <div className="panel-card__icon">{icon}</div>
     <div className="panel-card__body">
       <h3 className="panel-card__title">{title}</h3>
@@ -177,7 +181,7 @@ const PanelCard = ({ icon, title, description, metric }) => (
 
 const StatItem = ({ number, label }) => (
   <div className="stat-item">
-    <span className="stat-item__number">{number}</span>
+    <span className="stat-item__number text-glow">{number}</span>
     <span className="stat-item__label">{label}</span>
   </div>
 );
