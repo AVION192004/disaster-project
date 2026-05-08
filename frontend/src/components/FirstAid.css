@@ -1,343 +1,240 @@
-.first-aid-container {
+/* FirstAid3D.css - Premium Disaster Guidance UI */
+@import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800;900&display=swap');
+
+.fa3d {
+  background-color: #020617;
+  color: #f8fafc;
   min-height: 100vh;
-  background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
-  padding: 2rem;
+  position: relative;
+  overflow-x: hidden;
+  font-family: 'Outfit', sans-serif;
+  padding: 4rem 1rem;
 }
 
-.first-aid-content {
-  max-width: 1400px;
+/* 3D Background */
+.fa3d__canvas {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100vh;
+  z-index: 0;
+  pointer-events: none;
+  opacity: 0.5;
+}
+
+.fa3d__layout {
+  position: relative;
+  z-index: 10;
+  max-width: 1300px;
   margin: 0 auto;
 }
 
-/* Disaster Selector */
-.disaster-selector {
+/* Header */
+.fa3d__header {
+  text-align: center;
+  margin-bottom: 3rem;
+}
+
+.fa3d__header h1 {
+  font-size: 3.5rem;
+  font-weight: 900;
+  letter-spacing: -2px;
+  background: linear-gradient(135deg, #fff 0%, #94a3b8 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+/* Disaster Selector Pod */
+.fa3d__selector {
+  background: rgba(15, 23, 42, 0.4);
+  backdrop-filter: blur(24px);
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  padding: 1rem;
+  border-radius: 24px;
   margin-bottom: 2rem;
-  background: rgba(255, 255, 255, 0.05);
-  padding: 2rem;
-  border-radius: 12px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
-  border: 1px solid rgba(255, 255, 255, 0.1);
-}
-
-.disaster-selector-title {
-  font-size: 1.5rem;
-  font-weight: 600;
-  margin-bottom: 1.5rem;
-  color: #ffffff;
-}
-
-.disaster-buttons {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
-  gap: 1rem;
-}
-
-.disaster-button {
   display: flex;
-  flex-direction: column;
+  justify-content: center;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+}
+
+.fa3d__btn {
+  background: rgba(255, 255, 255, 0.02);
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  border-radius: 16px;
+  padding: 0.75rem 1.25rem;
+  color: #94a3b8;
+  font-weight: 600;
+  cursor: pointer;
+  display: flex;
   align-items: center;
   gap: 0.5rem;
-  padding: 1rem;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.fa3d__btn:hover {
   background: rgba(255, 255, 255, 0.05);
-  border: 2px solid rgba(255, 255, 255, 0.1);
-  border-radius: 12px;
-  cursor: pointer;
-  transition: all 0.3s ease;
-  font-family: inherit;
-  color: #e0e0e0;
-}
-
-.disaster-button:hover {
-  border-color: #a78bfa;
-  background: rgba(167, 139, 250, 0.1);
   transform: translateY(-2px);
-  box-shadow: 0 4px 12px rgba(167, 139, 250, 0.3);
 }
 
-.disaster-button.active {
-  background: linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%);
-  border-color: #8b5cf6;
-  color: white;
+.fa3d__btn.active {
+  background: rgba(59, 130, 246, 0.1);
+  border-color: #3b82f6;
+  color: #3b82f6;
+  box-shadow: 0 10px 20px rgba(59, 130, 246, 0.15);
 }
 
-.disaster-icon {
-  font-size: 2rem;
-}
-
-.disaster-name {
-  font-size: 0.95rem;
-  font-weight: 500;
-}
-
-/* Main Content Area */
-.first-aid-main {
+/* Main Grid */
+.fa3d__grid {
   display: grid;
-  grid-template-columns: 1fr 400px;
+  grid-template-columns: 1fr 340px;
   gap: 2rem;
 }
 
-/* Left Side - Disaster Instructions */
-.disaster-instructions {
-  background: rgba(255, 255, 255, 0.05);
-  padding: 2.5rem;
-  border-radius: 12px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
-  border-left: 4px solid #a78bfa;
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  border-left: 4px solid #a78bfa;
+/* Accordion Sections */
+.fa3d__main-card {
+  background: rgba(15, 23, 42, 0.5);
+  backdrop-filter: blur(32px);
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  border-radius: 40px;
+  padding: 3rem;
+  box-shadow: 0 40px 100px rgba(0, 0, 0, 0.5);
 }
 
-.aid-header {
-  margin-bottom: 2rem;
-}
-
-.aid-title {
-  font-size: 2.5rem;
-  font-weight: 700;
-  color: #ffffff;
-  margin: 0;
-}
-
-.aid-underline {
-  width: 60px;
-  height: 4px;
-  background: #a78bfa;
-  margin-top: 0.5rem;
-}
-
-.disaster-type-header {
+.fa3d__type-display {
   display: flex;
   align-items: center;
-  gap: 1rem;
-  margin-bottom: 2rem;
-  padding-bottom: 1rem;
-  border-bottom: 2px solid rgba(255, 255, 255, 0.1);
+  gap: 1.5rem;
+  margin-bottom: 3rem;
 }
 
-.disaster-type-icon {
+.fa3d__type-icon {
+  width: 70px;
+  height: 70px;
+  background: rgba(59, 130, 246, 0.1);
+  border-radius: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #3b82f6;
+  box-shadow: 0 15px 30px rgba(59, 130, 246, 0.15);
+}
+
+.fa3d__type-info h2 {
   font-size: 2.5rem;
-}
-
-.disaster-type-name {
-  font-size: 1.75rem;
-  font-weight: 600;
-  color: #ffffff;
+  font-weight: 800;
   margin: 0;
 }
 
 /* Accordion */
-.accordion-sections {
+.fa3d__accordion {
   display: flex;
   flex-direction: column;
   gap: 1rem;
 }
 
-.accordion-item {
-  border-radius: 8px;
+.fa3d__acc-item {
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  border-radius: 20px;
   overflow: hidden;
-}
-
-.accordion-header {
-  width: 100%;
-  padding: 1.25rem 1.5rem;
-  background: rgba(255, 255, 255, 0.05);
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  text-align: left;
-  font-size: 1.1rem;
-  font-weight: 600;
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  gap: 1rem;
   transition: all 0.3s ease;
-  color: #e0e0e0;
-  font-family: inherit;
-  border-radius: 8px;
 }
 
-.accordion-header:hover {
-  background: rgba(255, 255, 255, 0.08);
-  border-color: rgba(167, 139, 250, 0.3);
-}
-
-.accordion-header.active {
-  background: linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%);
+.fa3d__acc-header {
+  width: 100%;
+  padding: 1.5rem 2rem;
+  background: rgba(255, 255, 255, 0.02);
+  border: none;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
   color: white;
-  border-color: #8b5cf6;
+  font-size: 1.25rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: background 0.2s;
 }
 
-.accordion-icon {
-  font-size: 0.9rem;
-  transition: transform 0.3s ease;
+.fa3d__acc-header:hover {
+  background: rgba(255, 255, 255, 0.05);
 }
 
-.accordion-content {
-  padding: 1.5rem;
-  background: rgba(0, 0, 0, 0.3);
-  animation: slideDown 0.3s ease;
-  border-radius: 0 0 8px 8px;
-  margin-top: -8px;
+.fa3d__acc-header.active {
+  background: rgba(59, 130, 246, 0.05);
+  color: #3b82f6;
 }
 
-@keyframes slideDown {
-  from {
-    opacity: 0;
-    transform: translateY(-10px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
+.fa3d__acc-content {
+  padding: 1.5rem 2rem;
+  background: rgba(0, 0, 0, 0.1);
 }
 
-.instruction-item {
+.fa3d__list-item {
   display: flex;
   gap: 1rem;
-  margin-bottom: 1rem;
-  padding: 0.75rem;
-  background: rgba(255, 255, 255, 0.05);
-  border-radius: 8px;
-  align-items: flex-start;
-  border: 1px solid rgba(255, 255, 255, 0.1);
-}
-
-.instruction-item:last-child {
-  margin-bottom: 0;
-}
-
-.check-icon {
-  color: #10b981;
-  font-weight: bold;
-  font-size: 1.25rem;
-  flex-shrink: 0;
-}
-
-.instruction-item p {
-  margin: 0;
-  color: #e0e0e0;
+  margin-bottom: 1.25rem;
+  color: #94a3b8;
   line-height: 1.6;
-  font-size: 0.95rem;
 }
 
-/* Right Side - First Aid Supplies */
-.first-aid-supplies {
-  background: rgba(255, 255, 255, 0.05);
-  padding: 2rem;
-  border-radius: 12px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  height: fit-content;
-  position: sticky;
-  top: 2rem;
+.fa3d__check {
+  color: #10b981;
+  flex-shrink: 0;
+  margin-top: 0.25rem;
 }
 
-.supplies-title {
-  font-size: 1.25rem;
-  font-weight: 600;
-  color: #ffffff;
-  margin-bottom: 1.5rem;
-  padding-bottom: 1rem;
-  border-bottom: 2px solid rgba(255, 255, 255, 0.1);
-}
-
-.supplies-list {
+/* Sidebar */
+.fa3d__sidebar {
   display: flex;
   flex-direction: column;
-  gap: 0.75rem;
+  gap: 1.5rem;
 }
 
-.supply-item {
+.fa3d__side-card {
+  background: rgba(15, 23, 42, 0.5);
+  backdrop-filter: blur(32px);
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  border-radius: 32px;
+  padding: 2rem;
+  box-shadow: 0 30px 60px rgba(0, 0, 0, 0.3);
+}
+
+.fa3d__side-title {
+  font-size: 1.25rem;
+  font-weight: 700;
+  margin-bottom: 1.5rem;
+  color: white;
+}
+
+.fa3d__supply-item {
   display: flex;
   align-items: center;
   gap: 1rem;
-  padding: 1rem;
+  padding: 0.75rem;
+  background: rgba(255, 255, 255, 0.03);
+  border-radius: 12px;
+  margin-bottom: 0.5rem;
+  transition: transform 0.2s ease;
+}
+
+.fa3d__supply-item:hover {
+  transform: translateX(10px);
   background: rgba(255, 255, 255, 0.05);
-  border-radius: 8px;
-  transition: all 0.3s ease;
-  border: 1px solid rgba(255, 255, 255, 0.1);
 }
 
-.supply-item:hover {
-  background: rgba(167, 139, 250, 0.1);
-  border-color: rgba(167, 139, 250, 0.3);
-  transform: translateX(5px);
-}
-
-.supply-icon {
+.fa3d__supply-icon {
   font-size: 1.5rem;
 }
 
-.supply-name {
-  color: #e0e0e0;
+.fa3d__supply-name {
   font-size: 0.95rem;
+  font-weight: 500;
+  color: #94a3b8;
 }
 
-/* Responsive Design */
-@media (max-width: 1024px) {
-  .first-aid-main {
-    grid-template-columns: 1fr;
-  }
-
-  .first-aid-supplies {
-    position: static;
-  }
-
-  .disaster-buttons {
-    grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
-  }
-}
-
-@media (max-width: 768px) {
-  .first-aid-container {
-    padding: 1rem;
-  }
-
-  .disaster-selector {
-    padding: 1.5rem;
-  }
-
-  .disaster-buttons {
-    grid-template-columns: repeat(2, 1fr);
-  }
-
-  .disaster-instructions {
-    padding: 1.5rem;
-  }
-
-  .aid-title {
-    font-size: 2rem;
-  }
-
-  .disaster-type-name {
-    font-size: 1.5rem;
-  }
-
-  .accordion-header {
-    padding: 1rem;
-    font-size: 1rem;
-  }
-
-  .first-aid-supplies {
-    padding: 1.5rem;
-  }
-}
-
-@media (max-width: 480px) {
-  .disaster-buttons {
-    grid-template-columns: 1fr;
-  }
-
-  .disaster-button {
-    flex-direction: row;
-    justify-content: center;
-  }
-
-  .aid-title {
-    font-size: 1.75rem;
-  }
-
-  .disaster-type-header {
-    flex-direction: column;
-    align-items: flex-start;
-  }
+@media (max-width: 1100px) {
+  .fa3d__grid { grid-template-columns: 1fr; }
+  .fa3d__header h1 { font-size: 2.5rem; }
 }

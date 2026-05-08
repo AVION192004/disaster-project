@@ -13,8 +13,6 @@ const navItems = [
   { to: '/first-aid',         label: 'First Aid'        },
   { to: '/shelters',          label: 'Shelters'         },
   { to: '/disaster-news',     label: 'Disaster News'    },
-  
-  { to: '/officer/dashboard', label: 'Dashboard'        },
 ];
 
 export default function Header() {

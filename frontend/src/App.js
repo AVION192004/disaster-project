@@ -5,10 +5,6 @@ import HeroSection from "./components/HeroSection";
 import Features from "./components/Features";
 import HowItWorks from "./components/HowItWorks";
 import DamageAssessment from "./components/DamageAssessment";
-import SignUp from "./components/SignUp";
-import SignIn from "./components/SignIn";
-import Dashboard from "./components/Dashboard";
-import ProtectedRoute from "./components/ProtectedRoute";
 import ReportDisaster from "./components/ReportDisaster";
 import FirstAid from "./components/FirstAid";
 import SOSEmergency from "./components/SOSEmergency";
@@ -21,6 +17,8 @@ import ReliefBot from "./components/ReliefBot";
 import DisasterNews from "./components/DisasterNews";
 import ReliefBotFloating from "./components/ReliefBotFloating";
 import ThemeToggle from "./components/ThemeToggle";
+import Home3D from "./components/Home3D";
+import ReportDisaster3D from "./components/ReportDisaster3D";
 
 const darkPage = {
   backgroundColor: "#0D1117",
@@ -29,7 +27,6 @@ const darkPage = {
 };
 
 function App() {
-  const [isAuthenticated, setIsAuthenticated] = useState(false);
 
   // ✅ Offline / Online detection
   useEffect(() => {
@@ -59,22 +56,13 @@ function App() {
           {/* Home Page */}
           <Route
             path="/"
-            element={
-              <>
-                <HeroSection />
-                <HowItWorks />
-              </>
-            }
+            element={<Home3D />}
           />
 
           {/* Report Disaster */}
           <Route
             path="/report-disaster"
-            element={
-              <div style={darkPage}>
-                <ReportDisaster />
-              </div>
-            }
+            element={<ReportDisaster3D />}
           />
 
           {/* Damage Assessment */}
@@ -147,35 +135,9 @@ function App() {
             }
           />
 
-          {/* Auth Pages */}
-          <Route
-            path="/signup"
-            element={
-              <div style={darkPage}>
-                <SignUp />
-              </div>
-            }
-          />
-          <Route
-            path="/signin"
-            element={
-              <div style={darkPage}>
-                <SignIn onSignIn={() => setIsAuthenticated(true)} />
-              </div>
-            }
-          />
-
-          {/* Dashboard (Protected) */}
-          <Route
-            path="/dashboard"
-            element={
-              <ProtectedRoute isAuthenticated={isAuthenticated}>
-                <Dashboard />
-              </ProtectedRoute>
-            }
-          />
 
           {/* Officer Dashboard & Auth */}
+          <Route path="/signup" element={<OfficerRegister />} />
           <Route
             path="/officer/register"
             element={

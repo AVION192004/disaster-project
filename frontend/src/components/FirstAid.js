@@ -1,5 +1,30 @@
-import React, { useState } from 'react';
+import React, { useState, Suspense } from 'react';
+import { Canvas } from '@react-three/fiber';
+import { Float, Stars, OrbitControls } from '@react-three/drei';
+import { motion, AnimatePresence } from 'framer-motion';
+import { 
+  Droplets, Activity, Flame, Wind, Tornado, Mountain, 
+  ChevronDown, CheckCircle2, ShieldAlert, Heart, ClipboardList,
+  Cross, Syringe, Thermometer, User, PhoneCall, Info
+} from 'lucide-react';
 import './FirstAid.css';
+
+// Animated background sphere for Guidance
+function GuidanceSphere() {
+  return (
+    <Float speed={1.2} rotationIntensity={0.25} floatIntensity={0.25}>
+      <mesh>
+        <sphereGeometry args={[3.5, 64, 64]} />
+        <meshStandardMaterial
+          color="#3b82f6"
+          wireframe
+          transparent
+          opacity={0.1}
+        />
+      </mesh>
+    </Float>
+  );
+}
 
 const FirstAid = () => {
   const [selectedDisaster, setSelectedDisaster] = useState('earthquake');
@@ -7,8 +32,8 @@ const FirstAid = () => {
 
   const disasters = {
     earthquake: {
-      icon: '🌍',
-      name: 'Earthquake',
+      icon: <Activity size={24} />,
+      title: 'Earthquake Relief',
       before: [
         'Secure heavy furniture and appliances to walls',
         'Identify safe spots in each room (under sturdy tables, against interior walls)',
@@ -30,8 +55,8 @@ const FirstAid = () => {
       ]
     },
     flood: {
-      icon: '🌊',
-      name: 'Flood',
+      icon: <Droplets size={24} />,
+      title: 'Flood Guidance',
       before: [
         'Know your area\'s flood risk and evacuation routes',
         'Prepare an emergency kit with waterproof containers',
@@ -55,8 +80,8 @@ const FirstAid = () => {
       ]
     },
     hurricane: {
-      icon: '🌀',
-      name: 'Hurricane',
+      icon: <Wind size={24} />,
+      title: 'Hurricane Response',
       before: [
         'Know your evacuation zone and routes',
         'Stock up on non-perishable food and water',
@@ -80,8 +105,8 @@ const FirstAid = () => {
       ]
     },
     wildfire: {
-      icon: '🔥',
-      name: 'Wildfire',
+      icon: <Flame size={24} />,
+      title: 'Wildfire Defense',
       before: [
         'Create a defensible space around your home',
         'Use fire-resistant materials for roof and exterior',
@@ -105,8 +130,8 @@ const FirstAid = () => {
       ]
     },
     tornado: {
-      icon: '🌪️',
-      name: 'Tornado',
+      icon: <Tornado size={24} />,
+      title: 'Tornado Safety',
       before: [
         'Identify a safe room (basement or interior room on lowest floor)',
         'Prepare emergency supplies in your safe room',
@@ -130,8 +155,8 @@ const FirstAid = () => {
       ]
     },
     tsunami: {
-      icon: '🌊',
-      name: 'Tsunami',
+      icon: <Mountain size={24} />,
+      title: 'Tsunami Protocol',
       before: [
         'Know if you live in a tsunami hazard zone',
         'Learn the signs of a tsunami (ground shaking, ocean receding)',
@@ -157,137 +182,167 @@ const FirstAid = () => {
   };
 
   const firstAidSupplies = [
-    { icon: '🩹', name: 'Bandages and gauze' },
-    { icon: '🧼', name: 'Antiseptic wipes' },
-    { icon: '📌', name: 'Adhesive tape' },
-    { icon: '💊', name: 'Pain relievers' },
-    { icon: '✂️', name: 'Scissors and tweezers' },
-    { icon: '🌡️', name: 'Thermometer' },
-    { icon: '🧤', name: 'Medical gloves' },
-    { icon: '📱', name: 'Emergency contact list' }
+    { icon: <ShieldAlert size={20} />, name: 'Bandages and gauze' },
+    { icon: <Droplets size={20} />, name: 'Antiseptic wipes' },
+    { icon: <ClipboardList size={20} />, name: 'Adhesive tape' },
+    { icon: <Heart size={20} />, name: 'Pain relievers' },
+    { icon: <ClipboardList size={20} />, name: 'Scissors and tweezers' },
+    { icon: <Thermometer size={20} />, name: 'Thermometer' },
+    { icon: <User size={20} />, name: 'Medical gloves' },
+    { icon: <PhoneCall size={20} />, name: 'Emergency list' }
   ];
 
-  const toggleSection = (section) => {
-    setExpandedSection(expandedSection === section ? null : section);
-  };
+  const containers = [
+    { key: 'before', label: 'Before Disaster' },
+    { key: 'during', label: 'During Disaster' },
+    { key: 'after', label: 'After Disaster' }
+  ];
 
   return (
-    <div className="first-aid-container">
-      <div className="first-aid-content">
-        {/* Disaster Selection */}
-        <div className="disaster-selector">
-          <h2 className="disaster-selector-title">Select Disaster Type</h2>
-          <div className="disaster-buttons">
-            {Object.keys(disasters).map((key) => (
-              <button
-                key={key}
-                className={`disaster-button ${selectedDisaster === key ? 'active' : ''}`}
-                onClick={() => setSelectedDisaster(key)}
-              >
-                <span className="disaster-icon">{disasters[key].icon}</span>
-                <span className="disaster-name">{disasters[key].name}</span>
-              </button>
-            ))}
-          </div>
+    <div className="fa3d">
+      
+      {/* 3D Canvas Background */}
+      <div className="fa3d__canvas">
+        <Canvas camera={{ position: [0, 0, 8] }}>
+          <Suspense fallback={null}>
+            <ambientLight intensity={1} />
+            <directionalLight position={[10, 10, 10]} intensity={1} />
+            <Stars radius={100} depth={50} count={5000} factor={4} />
+            <GuidanceSphere />
+            <OrbitControls enableZoom={false} enablePan={false} />
+          </Suspense>
+        </Canvas>
+      </div>
+
+      <div className="fa3d__layout">
+        <motion.div 
+          className="fa3d__header"
+          initial={{ opacity: 0, y: -30 }}
+          animate={{ opacity: 1, y: 0 }}
+        >
+          <h1>Emergency Guidance</h1>
+        </motion.div>
+
+        {/* Disaster Type Selector */}
+        <div className="fa3d__selector">
+          {Object.entries(disasters).map(([key, data]) => (
+            <button
+              key={key}
+              className={`fa3d__btn ${selectedDisaster === key ? 'active' : ''}`}
+              onClick={() => setSelectedDisaster(key)}
+            >
+              {data.icon}
+              <span style={{textTransform: 'capitalize'}}>{key}</span>
+            </button>
+          ))}
         </div>
 
-        <div className="first-aid-main">
-          {/* Left Side - Disaster Instructions */}
-          <div className="disaster-instructions">
-            <div className="aid-header">
-              <h1 className="aid-title">Aid</h1>
-              <div className="aid-underline"></div>
-            </div>
-
-            <div className="disaster-type-header">
-              <span className="disaster-type-icon">{disasters[selectedDisaster].icon}</span>
-              <h2 className="disaster-type-name">{disasters[selectedDisaster].name}</h2>
-            </div>
-
-            <div className="accordion-sections">
-              {/* Before Section */}
-              <div className="accordion-item">
-                <button
-                  className={`accordion-header ${expandedSection === 'before' ? 'active' : ''}`}
-                  onClick={() => toggleSection('before')}
-                >
-                  <span className="accordion-icon">
-                    {expandedSection === 'before' ? '▼' : '▶'}
-                  </span>
-                  Before
-                </button>
-                {expandedSection === 'before' && (
-                  <div className="accordion-content">
-                    {disasters[selectedDisaster].before.map((item, index) => (
-                      <div key={index} className="instruction-item">
-                        <span className="check-icon">✓</span>
-                        <p>{item}</p>
-                      </div>
-                    ))}
-                  </div>
-                )}
+        <div className="fa3d__grid">
+          
+          {/* Main Instructions Card */}
+          <motion.div 
+            className="fa3d__main-card"
+            initial={{ opacity: 0, x: -50 }}
+            animate={{ opacity: 1, x: 0 }}
+            transition={{ delay: 0.1 }}
+          >
+            <div className="fa3d__type-display">
+              <div className="fa3d__type-icon">
+                {disasters[selectedDisaster].icon}
               </div>
-
-              {/* During Section */}
-              <div className="accordion-item">
-                <button
-                  className={`accordion-header ${expandedSection === 'during' ? 'active' : ''}`}
-                  onClick={() => toggleSection('during')}
-                >
-                  <span className="accordion-icon">
-                    {expandedSection === 'during' ? '▼' : '▶'}
-                  </span>
-                  During
-                </button>
-                {expandedSection === 'during' && (
-                  <div className="accordion-content">
-                    {disasters[selectedDisaster].during.map((item, index) => (
-                      <div key={index} className="instruction-item">
-                        <span className="check-icon">✓</span>
-                        <p>{item}</p>
-                      </div>
-                    ))}
-                  </div>
-                )}
-              </div>
-
-              {/* After Section */}
-              <div className="accordion-item">
-                <button
-                  className={`accordion-header ${expandedSection === 'after' ? 'active' : ''}`}
-                  onClick={() => toggleSection('after')}
-                >
-                  <span className="accordion-icon">
-                    {expandedSection === 'after' ? '▼' : '▶'}
-                  </span>
-                  After
-                </button>
-                {expandedSection === 'after' && (
-                  <div className="accordion-content">
-                    {disasters[selectedDisaster].after.map((item, index) => (
-                      <div key={index} className="instruction-item">
-                        <span className="check-icon">✓</span>
-                        <p>{item}</p>
-                      </div>
-                    ))}
-                  </div>
-                )}
+              <div className="fa3d__type-info">
+                <h2>{disasters[selectedDisaster].title}</h2>
+                <div style={{ height: '4px', width: '60px', background: '#3b82f6', borderRadius: '100px', marginTop: '0.5rem' }}></div>
               </div>
             </div>
-          </div>
 
-          {/* Right Side - First Aid Supplies */}
-          <div className="first-aid-supplies">
-            <h3 className="supplies-title">Essential First Aid Supplies</h3>
-            <div className="supplies-list">
-              {firstAidSupplies.map((supply, index) => (
-                <div key={index} className="supply-item">
-                  <span className="supply-icon">{supply.icon}</span>
-                  <span className="supply-name">{supply.name}</span>
+            <div className="fa3d__accordion">
+              {containers.map((section) => (
+                <div key={section.key} className="fa3d__acc-item">
+                  <button
+                    className={`fa3d__acc-header ${expandedSection === section.key ? 'active' : ''}`}
+                    onClick={() => setExpandedSection(expandedSection === section.key ? null : section.key)}
+                  >
+                    <span>{section.label}</span>
+                    <motion.div
+                      animate={{ rotate: expandedSection === section.key ? 180 : 0 }}
+                      transition={{ duration: 0.3 }}
+                    >
+                      <ChevronDown size={24} />
+                    </motion.div>
+                  </button>
+
+                  <AnimatePresence>
+                    {expandedSection === section.key && (
+                      <motion.div
+                        className="fa3d__acc-content"
+                        initial={{ height: 0, opacity: 0 }}
+                        animate={{ height: 'auto', opacity: 1 }}
+                        exit={{ height: 0, opacity: 0 }}
+                        transition={{ duration: 0.4, ease: "easeInOut" }}
+                      >
+                        {disasters[selectedDisaster][section.key].map((item, idx) => (
+                          <motion.div 
+                            key={idx} 
+                            className="fa3d__list-item"
+                            initial={{ opacity: 0, x: -20 }}
+                            animate={{ opacity: 1, x: 0 }}
+                            transition={{ delay: idx * 0.1 }}
+                          >
+                            <CheckCircle2 size={20} className="fa3d__check" />
+                            <span>{item}</span>
+                          </motion.div>
+                        ))}
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
                 </div>
               ))}
             </div>
+          </motion.div>
+
+          {/* Sidebar Supplies Card */}
+          <div className="fa3d__sidebar">
+            <motion.div 
+              className="fa3d__side-card"
+              initial={{ opacity: 0, x: 50 }}
+              animate={{ opacity: 1, x: 0 }}
+              transition={{ delay: 0.2 }}
+            >
+              <h3 className="fa3d__side-title">Recovery Essentials</h3>
+              <div className="fa3d__supplies">
+                {firstAidSupplies.map((supply, index) => (
+                  <motion.div 
+                    key={index} 
+                    className="fa3d__supply-item"
+                    initial={{ opacity: 0, x: 20 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    transition={{ delay: index * 0.05 }}
+                  >
+                    <div style={{ color: '#3b82f6' }}>{supply.icon}</div>
+                    <span className="fa3d__supply-name">{supply.name}</span>
+                  </motion.div>
+                ))}
+              </div>
+            </motion.div>
+
+            <motion.div 
+              className="fa3d__side-card"
+              initial={{ opacity: 0, x: 50 }}
+              animate={{ opacity: 1, x: 0 }}
+              transition={{ delay: 0.3 }}
+              style={{ background: 'rgba(59, 130, 246, 0.05)', border: '1px dashed rgba(59, 130, 246, 0.2)' }}
+            >
+              <h3 className="fa3d__side-title" style={{ color: '#3b82f6', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                <Info size={20} /> Urgent Tip
+              </h3>
+              <p style={{ fontSize: '0.9rem', color: '#94a3b8', lineHeight: 1.6 }}>
+                Always prioritize your own safety before attempting to help others.
+                Wait for official 'all-clear' signals from local authorities.
+              </p>
+            </motion.div>
           </div>
+
         </div>
       </div>
     </div>
