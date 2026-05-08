@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import { Menu, X, Shield, AlertTriangle, Bell, Bot } from 'lucide-react';
+import { Menu, X, AlertTriangle } from 'lucide-react';
 import './Header.css';
 import NotificationBell from './NotificationBell';
 
@@ -13,13 +13,15 @@ const navItems = [
   { to: '/shelters',          label: 'Shelters'         },
   { to: '/disaster-news',     label: 'Disaster News'    },
   { to: '/relief-bot',        label: 'Relief Bot'       },
-  { to: '/officer/dashboard', label: 'Dashboard'        },
 ];
 
 export default function Header() {
-  const [scrolled, setScrolled]   = useState(false);
-  const [menuOpen, setMenuOpen]   = useState(false);
+  const [scrolled, setScrolled] = useState(false);
+  const [menuOpen, setMenuOpen] = useState(false);
+  const [isDark, setIsDark] = useState(true);
   const location = useLocation();
+
+  const isLoggedIn = !!localStorage.getItem('token');
 
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 12);
@@ -27,10 +29,35 @@ export default function Header() {
     return () => window.removeEventListener('scroll', onScroll);
   }, []);
 
-  // Close mobile menu on route change
   useEffect(() => { setMenuOpen(false); }, [location.pathname]);
 
+  useEffect(() => {
+    const saved = localStorage.getItem('site-theme');
+    const dark = saved ? saved === 'dark'
+      : !window.matchMedia('(prefers-color-scheme: light)').matches;
+    setIsDark(dark);
+  }, []);
+
   const isActive = (path) => location.pathname === path;
+
+  const handleSignOut = () => {
+    localStorage.removeItem('token');
+    window.location.href = '/';
+  };
+
+  const toggleTheme = () => {
+    const next = !isDark;
+    setIsDark(next);
+    const root = document.getElementById('root') || document.body;
+    if (next) {
+      root.style.filter = '';
+      root.classList.remove('lm');
+    } else {
+      root.style.filter = 'invert(1) hue-rotate(180deg)';
+      root.classList.add('lm');
+    }
+    localStorage.setItem('site-theme', next ? 'dark' : 'light');
+  };
 
   return (
     <header className={`hdr${scrolled ? ' hdr--scrolled' : ''}`}>
@@ -57,6 +84,16 @@ export default function Header() {
                 </Link>
               </li>
             ))}
+            {isLoggedIn && (
+              <li>
+                <Link
+                  to="/officer/dashboard"
+                  className={`hdr__nav-link${isActive('/officer/dashboard') ? ' hdr__nav-link--active' : ''}`}
+                >
+                  Dashboard
+                </Link>
+              </li>
+            )}
           </ul>
         </nav>
 
@@ -69,12 +106,16 @@ export default function Header() {
             SOS
           </Link>
 
-          <Link to="/officer/login" className="hdr__btn hdr__btn--ghost">
-            Sign In
-          </Link>
-          <Link to="/officer/register" className="hdr__btn hdr__btn--primary">
-            Sign Up
-          </Link>
+          {isLoggedIn ? (
+            <button className="hdr__btn hdr__btn--ghost" onClick={handleSignOut}>
+              Sign Out
+            </button>
+          ) : (
+            <>
+              <Link to="/officer/login" className="hdr__btn hdr__btn--ghost">Sign In</Link>
+              <Link to="/officer/register" className="hdr__btn hdr__btn--primary">Sign Up</Link>
+            </>
+          )}
         </div>
 
         {/* Hamburger */}
@@ -103,13 +144,42 @@ export default function Header() {
                   </Link>
                 </li>
               ))}
+              {isLoggedIn && (
+                <li>
+                  <Link
+                    to="/officer/dashboard"
+                    className={`hdr__mobile-link${isActive('/officer/dashboard') ? ' hdr__mobile-link--active' : ''}`}
+                  >
+                    Dashboard
+                  </Link>
+                </li>
+              )}
             </ul>
             <div className="hdr__mobile-actions">
               <Link to="/sos" className="hdr__sos hdr__sos--full">
                 <AlertTriangle size={14} /> 🆘 SOS Emergency
               </Link>
-              <Link to="/officer/login"    className="hdr__btn hdr__btn--ghost hdr__btn--full">Sign In</Link>
-              <Link to="/officer/register" className="hdr__btn hdr__btn--primary hdr__btn--full">Sign Up</Link>
+
+              {/* Theme Toggle inside mobile menu */}
+              <button
+                onClick={toggleTheme}
+                className="hdr__btn hdr__btn--ghost hdr__btn--full"
+                style={{ gap: '8px' }}
+              >
+                <span style={{ fontSize: '16px' }}>{isDark ? '☀️' : '🌙'}</span>
+                {isDark ? 'Switch to Light Mode' : 'Switch to Dark Mode'}
+              </button>
+
+              {isLoggedIn ? (
+                <button className="hdr__btn hdr__btn--ghost hdr__btn--full" onClick={handleSignOut}>
+                  Sign Out
+                </button>
+              ) : (
+                <>
+                  <Link to="/officer/login" className="hdr__btn hdr__btn--ghost hdr__btn--full">Sign In</Link>
+                  <Link to="/officer/register" className="hdr__btn hdr__btn--primary hdr__btn--full">Sign Up</Link>
+                </>
+              )}
             </div>
           </nav>
         </div>

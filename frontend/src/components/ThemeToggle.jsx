@@ -25,9 +25,8 @@ function applyTheme(dark) {
     root.style.filter = '';
     root.classList.remove('lm');
   } else {
-    // saturate(4) + brightness(1.2) restores vibrancy of reds/purples/oranges
-    // that get darkened by invert(1) hue-rotate(180deg)
-root.style.filter = 'invert(1) hue-rotate(180deg)';    root.classList.add('lm');
+    root.style.filter = 'invert(1) hue-rotate(180deg)';
+    root.classList.add('lm');
   }
 }
 
@@ -51,33 +50,41 @@ export default function ThemeToggle() {
   };
 
   return (
-    <button
-      onClick={toggle}
-      aria-label={isDark ? 'Switch to light mode' : 'Switch to dark mode'}
-      style={{
-        position: 'fixed',
-        top: '16px',
-        right: '16px',
-        zIndex: 2147483647,
-        display: 'flex',
-        alignItems: 'center',
-        gap: '8px',
-        padding: '10px 18px',
-        background: '#1a2236',
-        border: '1px solid #3b82f6',
-        borderRadius: '50px',
-        color: '#e2e8f0',
-        cursor: 'pointer',
-        fontSize: '13px',
-        fontWeight: '700',
-        fontFamily: 'system-ui, sans-serif',
-        boxShadow: '0 4px 20px rgba(0,0,0,0.5)',
-        userSelect: 'none',
-        outline: 'none',
-      }}
-    >
-      <span style={{ fontSize: '16px' }}>{isDark ? '☀️' : '🌙'}</span>
-      {isDark ? 'Light' : 'Dark'}
-    </button>
+    <>
+      <style>{`
+        @media (max-width: 960px) {
+          #theme-toggle-btn { display: none !important; }
+        }
+      `}</style>
+      <button
+        id="theme-toggle-btn"
+        onClick={toggle}
+        aria-label={isDark ? 'Switch to light mode' : 'Switch to dark mode'}
+        style={{
+          position: 'fixed',
+          top: '16px',
+          right: '16px',
+          zIndex: 2147483647,
+          display: 'flex',
+          alignItems: 'center',
+          gap: '8px',
+          padding: '10px 18px',
+          background: '#1a2236',
+          border: '1px solid #3b82f6',
+          borderRadius: '50px',
+          color: '#e2e8f0',
+          cursor: 'pointer',
+          fontSize: '13px',
+          fontWeight: '700',
+          fontFamily: 'system-ui, sans-serif',
+          boxShadow: '0 4px 20px rgba(0,0,0,0.5)',
+          userSelect: 'none',
+          outline: 'none',
+        }}
+      >
+        <span style={{ fontSize: '16px' }}>{isDark ? '☀️' : '🌙'}</span>
+        {isDark ? 'Light' : 'Dark'}
+      </button>
+    </>
   );
 }
