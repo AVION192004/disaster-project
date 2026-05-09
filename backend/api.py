@@ -12,23 +12,12 @@ import random
 import math
 import uuid
 
-# try:
-#     from inference_damage import DamageAssessor
-#     ... moved down for safety ...
-
 from groq import Groq
 from dotenv import load_dotenv
 
-# ==============================
-# App Setup
-# ==============================
-
 app = Flask(__name__)
-# with open('startup_log.txt', 'a') as f:
-#    f.write(f"Startup at {datetime.now()}\n")
 app.config['SECRET_KEY'] = os.getenv('SECRET_KEY', 'default-dev-secret-key')
 
-# Simple CORS + SocketIO
 CORS(app, resources={r"/*": {"origins": "*"}})
 socketio = SocketIO(app, cors_allowed_origins="*")
 
@@ -46,10 +35,6 @@ except Exception as e:
     print(f"Warning: Could not load DamageAssessor model: {e}")
     damage_assessor = None
 
-# ==============================
-# Load Environment Variables
-# ==============================
-
 load_dotenv()
 GROQ_API_KEY = os.getenv("GROQ_API_KEY")
 TELEGRAM_TOKEN = os.getenv("TELEGRAM_BOT_TOKEN")
@@ -62,10 +47,6 @@ else:
 
 groq_client = Groq(api_key=GROQ_API_KEY) if GROQ_API_KEY else None
 print("OK: GROQ ready" if groq_client else "WARNING: GROQ not configured (using fallback)")
-
-# ==============================
-# Database Initialization
-# ==============================
 
 def init_db():
     conn = sqlite3.connect(DB_PATH)
@@ -129,8 +110,8 @@ def init_db():
             c.execute("INSERT INTO shelters (name, latitude, longitude, capacity, available) VALUES (?, ?, ?, ?, ?)", shelter)
 
     c.execute("""CREATE TABLE IF NOT EXISTS telegram_users (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    chat_id TEXT UNIQUE
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        chat_id TEXT UNIQUE
     )""")
 
     conn.commit()
@@ -138,10 +119,6 @@ def init_db():
     print("OK: Database initialized")
 
 init_db()
-
-# ==============================
-# SocketIO Event Handlers
-# ==============================
 
 @socketio.on('connect')
 def handle_connect():
@@ -151,10 +128,6 @@ def handle_connect():
 @socketio.on('disconnect')
 def handle_disconnect():
     print('X: Client disconnected')
-
-# ==============================
-# Officer Auth
-# ==============================
 
 @app.route('/api/officer/register', methods=['POST'])
 def officer_register():
@@ -177,7 +150,7 @@ def officer_register():
         conn = sqlite3.connect(DB_PATH)
         c = conn.cursor()
         c.execute('''INSERT INTO officers (email, password, name, phone, office_name, latitude, longitude, address) 
-                    VALUES (?, ?, ?, ?, ?, ?, ?, ?)''', 
+                    VALUES (?, ?, ?, ?, ?, ?, ?, ?)''',
                   (email, hashed_password, name, phone, office_name, latitude, longitude, address))
         conn.commit()
         conn.close()
@@ -219,9 +192,6 @@ def officer_login():
         'officer': {'id': officer_id, 'email': officer_email, 'name': officer_name}
     }), 200
 
-# ==============================
-# Shelters API
-# ==============================
 
 @app.route('/api/shelters', methods=['GET'])
 def get_shelters():
@@ -267,16 +237,15 @@ def nearest_shelter():
     min_distance = 9999
 
     for r in rows:
-        # Haversine formula for accurate geographic distance
-        R = 6371  # Earth radius in km
+        R = 6371
         shelter_lat, shelter_lon = float(r[2]), float(r[3])
         dlat = math.radians(shelter_lat - user_lat)
         dlon = math.radians(shelter_lon - user_lon)
         a = math.sin(dlat/2) * math.sin(dlat/2) + \
             math.cos(math.radians(user_lat)) * math.cos(math.radians(shelter_lat)) * \
             math.sin(dlon/2) * math.sin(dlon/2)
-        c = 2 * math.atan2(math.sqrt(a), math.sqrt(1-a))
-        distance = R * c
+        c2 = 2 * math.atan2(math.sqrt(a), math.sqrt(1-a))
+        distance = R * c2
 
         if distance < min_distance:
             min_distance = distance
@@ -292,64 +261,44 @@ def nearest_shelter():
         "distance_km": round(min_distance, 2)
     })
 
+
 @app.route("/telegram/webhook", methods=["POST"])
 def telegram_webhook():
     data = request.json
-
     if "message" in data:
         chat_id = data["message"].get("chat", {}).get("id")
         text = data["message"].get("text", "")
-
         if text == "/start":
             conn = sqlite3.connect(DB_PATH)
             c = conn.cursor()
-
             c.execute("INSERT OR IGNORE INTO telegram_users (chat_id) VALUES (?)", (chat_id,))
             conn.commit()
             conn.close()
-
             requests.post(
                 f"https://api.telegram.org/bot{TELEGRAM_TOKEN}/sendMessage",
-                json={
-                    "chat_id": chat_id,
-                    "text": "✅ You will now receive disaster alerts from RescueVision."
-                }
+                json={"chat_id": chat_id, "text": "✅ You will now receive disaster alerts from RescueVision."}
             )
-
     return jsonify({"status": "ok"})
-# ==============================
-# Telegram Alerts
-# ==============================
+
 
 def send_telegram_alert(message):
     try:
         if not TELEGRAM_TOKEN or not TELEGRAM_CHAT_ID:
             print("⚠️ Telegram bot not configured")
             return
-
         url = f"https://api.telegram.org/bot{TELEGRAM_TOKEN}/sendMessage"
-
         response = requests.post(
             url,
-            json={
-                "chat_id": TELEGRAM_CHAT_ID,
-                "text": message,
-                "parse_mode": "HTML"
-            },
+            json={"chat_id": TELEGRAM_CHAT_ID, "text": message, "parse_mode": "HTML"},
             timeout=5
         )
-
         print("Telegram response:", response.json())
-
     except requests.exceptions.RequestException as e:
         print("Telegram request failed:", e)
-# ==============================
-# Disaster Reports
-# ==============================
+
 
 @app.route('/api/disaster/notify', methods=['POST'])
 def notify_disaster():
-    """Admin endpoint to manually create a disaster alert and notify officers."""
     try:
         data = request.get_json() or {}
         disaster_type = data.get('disaster_type', '')
@@ -357,14 +306,12 @@ def notify_disaster():
         location_name = data.get('location_name', '')
         description   = data.get('description', '')
 
-        # Normalize severity to match the rest of the app
         severity_map = {'low': 'Low', 'medium': 'Medium', 'high': 'High', 'critical': 'Critical'}
         severity = severity_map.get(severity_raw.lower(), 'Medium')
 
         if not disaster_type or not location_name:
             return jsonify({'success': False, 'error': 'disaster_type and location_name required'}), 400
 
-        # Insert into disaster_reports so it shows in dashboards
         conn = sqlite3.connect(DB_PATH)
         c = conn.cursor()
         c.execute(
@@ -376,14 +323,12 @@ def notify_disaster():
         conn.commit()
         conn.close()
 
-        # Broadcast via socket
         socketio.emit('new_disaster_report', {
             'id': report_id, 'name': disaster_type, 'location': location_name,
             'severity': severity, 'reporter_name': 'Admin',
             'timestamp': datetime.now().isoformat()
         })
 
-        # Telegram alert
         send_telegram_alert(
             f"🚨 ADMIN ALERT\n📍 {location_name}\n🔥 {disaster_type}\n⚠️ {severity}\n\n{description}"
         )
@@ -392,7 +337,7 @@ def notify_disaster():
             'success': True,
             'message': 'Disaster alert created and broadcast',
             'report_id': report_id,
-            'notified_officers_count': 0  # socket handles real-time notification
+            'notified_officers_count': 0
         }), 201
 
     except Exception as e:
@@ -402,7 +347,6 @@ def notify_disaster():
 @app.route('/api/disaster/report', methods=['POST'])
 def report_disaster():
     try:
-        # ✅ Support both JSON (ReportDisaster3D) and multipart form-data (ReportDisaster)
         is_json = request.content_type and 'application/json' in request.content_type
         if is_json:
             payload = request.get_json() or {}
@@ -410,20 +354,24 @@ def report_disaster():
         else:
             get_field = lambda key, default='': request.form.get(key, default)
 
-        name          = get_field('name')
-        location      = get_field('location')
-        description   = get_field('description', '')
-        severity      = get_field('severity', 'Medium')
-        reporter_name = get_field('reporter_name', 'Anonymous')
-        reporter_phone= get_field('reporter_phone', '')
-        reporter_email= get_field('reporter_email', '')
+        name           = get_field('name')
+        location       = get_field('location')
+        description    = get_field('description', '')
+        severity       = get_field('severity', 'Medium')
+        reporter_name  = get_field('reporter_name', 'Anonymous')
+        reporter_phone = get_field('reporter_phone', '')
+        reporter_email = get_field('reporter_email', '')
 
-        casualties_str     = get_field('casualties', '0')
-        affected_people_str= get_field('affected_people', '0')
+        affected_people_str = get_field('affected_people', '0')
 
-        # Safe integer conversion
+        # Accept both combined 'casualties' and split injured/missing/deceased
         try:
-            casualties = int(casualties_str) if casualties_str else 0
+            casualties = (
+                int(get_field('casualties', '0') or 0)
+                + int(get_field('injured', '0') or 0)
+                + int(get_field('missing', '0') or 0)
+                + int(get_field('deceased', '0') or 0)
+            )
         except (ValueError, TypeError):
             casualties = 0
 
@@ -435,8 +383,6 @@ def report_disaster():
         if not name or not location:
             return jsonify({'success': False, 'error': 'Name and location required'}), 400
 
-
-        # Handle image uploads
         uploaded_images = []
         if 'images' in request.files:
             files = request.files.getlist('images')
@@ -447,10 +393,9 @@ def report_disaster():
                     save_path = os.path.join(UPLOAD_FOLDER, filename)
                     file.save(save_path)
                     uploaded_images.append(filename)
-        
+
         images_str = ",".join(uploaded_images) if uploaded_images else None
 
-        # Database Insertion
         conn = sqlite3.connect(DB_PATH)
         c = conn.cursor()
         c.execute('''INSERT INTO disaster_reports 
@@ -461,13 +406,12 @@ def report_disaster():
         conn.commit()
         conn.close()
 
-        # Alerts and Notifications
         alert_msg = f"🚨 NEW DISASTER REPORT\n\n📍 Location: {location}\n🔥 Type: {name}\n⚠️ Severity: {severity}\n\n👤 Reporter: {reporter_name}\n📞 Phone: {reporter_phone or 'Not provided'}"
         if casualties:
             alert_msg += f"\n🚑 Casualties: {casualties}"
         if affected_people:
             alert_msg += f"\n🏠 Affected: {affected_people}"
-        
+
         send_telegram_alert(alert_msg)
 
         socketio.emit('new_disaster_report', {
@@ -506,8 +450,8 @@ def update_disaster_status(report_id):
     if report:
         socketio.emit('disaster_status_updated', {
             'report_id': report_id, 'name': report[0], 'location': report[1],
-            'new_status': new_status, 'timestamp': datetime.now().isoformat()},
-        )
+            'new_status': new_status, 'timestamp': datetime.now().isoformat()
+        })
 
     return jsonify({'success': True, 'message': 'Status updated'}), 200
 
@@ -530,17 +474,14 @@ def get_stats():
         c.execute("SELECT COUNT(*) FROM disaster_reports WHERE status = 'Completed'")
         resolved = c.fetchone()[0]
 
-        # Severity breakdown
         c.execute("SELECT severity, COUNT(*) FROM disaster_reports GROUP BY severity")
         severity_rows = c.fetchall()
         severity_breakdown = {row[0]: row[1] for row in severity_rows}
 
-        # Top disaster types
         c.execute("SELECT name, COUNT(*) as cnt FROM disaster_reports GROUP BY name ORDER BY cnt DESC LIMIT 5")
         type_rows = c.fetchall()
         disaster_types = [{"type": row[0], "count": row[1]} for row in type_rows]
 
-        # Recent reports (last 10)
         c.execute("SELECT id, name, location, severity, status, created_at FROM disaster_reports ORDER BY created_at DESC LIMIT 10")
         recent_rows = c.fetchall()
         recent_reports = [
@@ -581,9 +522,6 @@ def get_reports():
          'images': r[10], 'status': r[11], 'created_at': r[12]} for r in rows
     ]})
 
-# ==============================
-# Groq AI Chatbot
-# ==============================
 
 @app.route('/api/chatbot/groq-chat', methods=['POST'])
 def groq_chat():
@@ -654,9 +592,6 @@ def log_conversation(user_msg, bot_msg, location):
     except Exception as e:
         print(f"⚠️ Logging error: {e}")
 
-# ==============================
-# Damage Assessment
-# ==============================
 
 @app.route('/api/damage/assess', methods=['POST'])
 def assess_damage():
@@ -698,9 +633,6 @@ def assess_damage():
         print(f"Damage assessment error: {str(e)}")
         return jsonify({'success': False, 'error': 'Assessment failed.'}), 500
 
-# ==============================
-# Health Check
-# ==============================
 
 @app.route('/api/health', methods=['GET'])
 def health():
@@ -711,6 +643,7 @@ def health():
         'db': 'connected' if os.path.exists(DB_PATH) else 'not found',
         'resource_db': 'connected' if os.path.exists(RESOURCE_DB_PATH) else 'not found',
     }), 200
+
 
 @app.route('/api/chatbot/test', methods=['GET'])
 def test_chatbot():
@@ -726,9 +659,6 @@ def test_chatbot():
     except Exception as e:
         return jsonify({'success': False, 'error': str(e)}), 500
 
-# ==============================
-# Resource Allocation Endpoints
-# ==============================
 
 MOCK_RESOURCES = [
     {"resource_name": "Search & Rescue Teams", "quantity": 50},
@@ -752,9 +682,9 @@ def allocate_resources():
     global _resources
     data = request.get_json() or {}
 
-    minor   = int(data.get('building_minor_damage',      0))
-    major   = int(data.get('building_major_damage',      0))
-    destruct= int(data.get('building_total_destruction', 0))
+    minor    = int(data.get('building_minor_damage',      0))
+    major    = int(data.get('building_major_damage',      0))
+    destruct = int(data.get('building_total_destruction', 0))
 
     def alloc(tier_count, multiplier):
         results = []
@@ -776,9 +706,6 @@ def allocate_resources():
         "updated_resources":  _resources
     })
 
-# Run Server
-
-# ==============================
 
 if __name__ == '__main__':
     print("=" * 60)

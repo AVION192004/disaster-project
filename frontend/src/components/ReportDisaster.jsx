@@ -111,8 +111,10 @@ export default function ReportDisaster() {
           reporter_name: formData.reporterName,
           reporter_phone: formData.reporterPhone,
           reporter_email: formData.reporterEmail,
-          casualties: parseInt(formData.injured || 0) + parseInt(formData.deceased || 0) + parseInt(formData.missing || 0),
-          affected_people: parseInt(formData.displaced || 0)
+          injured: parseInt(formData.injured || 0),
+          missing: parseInt(formData.missing || 0),
+          deceased: parseInt(formData.deceased || 0),
+          affected_people: parseInt(formData.displaced || 0),
         }),
       });
       const data = await response.json();
@@ -212,7 +214,6 @@ export default function ReportDisaster() {
     <div style={styles.container}>
       <div style={styles.layout} className="rd-layout">
 
-        {/* Main Form Column */}
         <div style={styles.mainCol} className="rd-main-col">
           <div style={styles.pageHeader}>
             <div style={styles.titleBox}>
@@ -238,7 +239,6 @@ export default function ReportDisaster() {
               </div>
             </div>
 
-            {/* Disaster Type */}
             <label style={styles.label}>Disaster Type <span style={styles.req}>*</span></label>
             <div style={styles.typeGrid} className="rd-type-grid">
               {disasterTypes.map(type => (
@@ -249,7 +249,6 @@ export default function ReportDisaster() {
               ))}
             </div>
 
-            {/* Severity */}
             <label style={styles.label}>Severity Level <span style={styles.req}>*</span></label>
             <p style={{fontSize:'0.75rem', color:'#64748b', marginBottom:'12px'}}>Select numbers representing the impact scale.</p>
             <div style={styles.severityContainer} className="rd-severity">
@@ -261,7 +260,6 @@ export default function ReportDisaster() {
               ))}
             </div>
 
-            {/* Location */}
             <label style={styles.label}>Location <span style={styles.req}>*</span></label>
             <div style={styles.inputContainer}>
               <MapPin style={styles.inputIcon} size={20} />
@@ -276,7 +274,6 @@ export default function ReportDisaster() {
               </div>
             </div>
 
-            {/* Casualties */}
             <label style={{...styles.label, marginTop:'32px', borderBottom:'1px solid #1e293b', paddingBottom:'16px', marginBottom:'20px'}}>Estimated Casualties</label>
             <div style={styles.casualtiesGrid} className="rd-casualties-grid">
               <div>
@@ -297,12 +294,10 @@ export default function ReportDisaster() {
               </div>
             </div>
 
-            {/* Description */}
             <label style={styles.label}>Description</label>
             <textarea name="description" value={formData.description} onChange={handleInputChange}
               style={styles.textarea} placeholder="Describe the situation in detail. What happened? What assistance is needed?" />
 
-            {/* Reporter Details */}
             <h2 style={styles.sectionTitle}><User size={24} color="#3b82f6" /> Reporter Details</h2>
             <p style={styles.sectionSubtitle}>Please provide your contact information so responders can reach you if needed.</p>
 
@@ -331,7 +326,6 @@ export default function ReportDisaster() {
               </div>
             </div>
 
-            {/* Image Upload */}
             <label style={styles.label}><Camera size={18} style={{verticalAlign:'middle', marginRight:'6px'}}/> Visual Evidence (Images)</label>
             <p style={{fontSize:'0.75rem', color:'#64748b', marginBottom:'12px'}}>Upload photos of the scene if it is safe to do so.</p>
             <input type="file" multiple accept="image/*" onChange={handleFileChange} style={{ display: 'none' }} id="imageUpload" />
@@ -412,39 +406,17 @@ export default function ReportDisaster() {
         .main-submit:hover:not(:disabled) { background: #dc2626 !important; transform: translateY(-2px); box-shadow: 0 6px 20px 0 rgba(239,68,68,0.5) !important; }
 
         @media (max-width: 900px) {
-          .rd-layout {
-            flex-direction: column !important;
-            padding: 1rem !important;
-          }
-          .rd-main-col {
-            max-width: 100% !important;
-            width: 100% !important;
-          }
-          .rd-sidebar-col {
-            width: 100% !important;
-            position: static !important;
-          }
+          .rd-layout { flex-direction: column !important; padding: 1rem !important; }
+          .rd-main-col { max-width: 100% !important; width: 100% !important; }
+          .rd-sidebar-col { width: 100% !important; position: static !important; }
         }
-
         @media (max-width: 600px) {
-          .rd-formbox {
-            padding: 1rem !important;
-          }
-          .rd-type-grid {
-            grid-template-columns: repeat(2, 1fr) !important;
-          }
-          .rd-severity {
-            flex-wrap: wrap !important;
-          }
-          .rd-severity > div {
-            flex: 1 1 28% !important;
-          }
-          .rd-reporter-grid {
-            grid-template-columns: 1fr !important;
-          }
-          .rd-casualties-grid {
-            grid-template-columns: repeat(2, 1fr) !important;
-          }
+          .rd-formbox { padding: 1rem !important; }
+          .rd-type-grid { grid-template-columns: repeat(2, 1fr) !important; }
+          .rd-severity { flex-wrap: wrap !important; }
+          .rd-severity > div { flex: 1 1 28% !important; }
+          .rd-reporter-grid { grid-template-columns: 1fr !important; }
+          .rd-casualties-grid { grid-template-columns: repeat(2, 1fr) !important; }
         }
       `}} />
     </div>
