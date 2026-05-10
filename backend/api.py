@@ -325,49 +325,59 @@ else:
     print("WARNING: Telegram bot not starting: Set TELEGRAM_BOT_TOKEN in .env")
 
 
+import html
+
 def send_telegram_alert(message):
-    try:
-        if not TELEGRAM_TOKEN:
-            print("WARNING: Telegram bot token not configured")
-            return
-
-        chat_ids = set()
-        if TELEGRAM_CHAT_ID and TELEGRAM_CHAT_ID != "your_telegram_chat_id":
-            chat_ids.add(TELEGRAM_CHAT_ID)
-
+    def _send():
         try:
-            conn = sqlite3.connect(DB_PATH)
-            c = conn.cursor()
-            c.execute("SELECT chat_id FROM telegram_users")
-            rows = c.fetchall()
-            for row in rows:
-                if row[0]:
-                    chat_ids.add(row[0])
-            conn.close()
-        except Exception as e:
-            print(f"WARNING: Could not fetch telegram users: {e}")
+            if not TELEGRAM_TOKEN or TELEGRAM_TOKEN == "your_telegram_bot_token":
+                print("WARNING: Telegram bot token not configured")
+                return
 
-        if not chat_ids:
-            print("INFO: No Telegram chat IDs to notify")
-            return
+            chat_ids = set()
+            if TELEGRAM_CHAT_ID and TELEGRAM_CHAT_ID != "your_telegram_chat_id":
+                chat_ids.add(TELEGRAM_CHAT_ID)
 
-        url = f"https://api.telegram.org/bot{TELEGRAM_TOKEN}/sendMessage"
-        for cid in chat_ids:
             try:
-                response = requests.post(
-                    url,
-                    json={"chat_id": cid, "text": message, "parse_mode": "HTML"},
-                    timeout=5
-                )
-                if response.status_code == 200:
-                    print(f"OK: Telegram message sent to {cid}")
-                else:
-                    print(f"WARNING: Telegram returned {response.status_code} for {cid}")
+                conn = sqlite3.connect(DB_PATH)
+                c = conn.cursor()
+                c.execute("SELECT chat_id FROM telegram_users")
+                rows = c.fetchall()
+                for row in rows:
+                    if row[0]:
+                        chat_ids.add(row[0])
+                conn.close()
             except Exception as e:
-                print(f"ERROR: Failed to send Telegram to {cid}")
+                print(f"WARNING: Could not fetch telegram users from DB: {e}")
 
-    except Exception as e:
-        print("ERROR: Telegram alert system failure:", e)
+            if not chat_ids:
+                print("INFO: No Telegram chat IDs to notify")
+                return
+
+            url = f"https://api.telegram.org/bot{TELEGRAM_TOKEN}/sendMessage"
+            for cid in chat_ids:
+                try:
+                    # Use HTML parse mode, so we must escape special characters in the message body
+                    # but our emojis and basic structure (🚨, \n) are fine.
+                    # If we wanted to keep the bold/italic, we'd have to be careful.
+                    # For now, let's just ensure it's robust.
+                    response = requests.post(
+                        url,
+                        json={"chat_id": cid, "text": message, "parse_mode": "HTML"},
+                        timeout=10
+                    )
+                    if response.status_code == 200:
+                        print(f"OK: Telegram message sent to {cid}")
+                    else:
+                        print(f"WARNING: Telegram returned {response.status_code} for {cid}: {response.text}")
+                except Exception as e:
+                    print(f"ERROR: Failed to send Telegram to {cid}: {e}")
+
+        except Exception as e:
+            print("ERROR: Telegram alert system failure:", e)
+
+    # Run in background thread to not block the main request
+    threading.Thread(target=_send, daemon=True).start()
 
 
 @app.route('/api/disaster/notify', methods=['POST'])
@@ -496,11 +506,24 @@ def report_disaster():
         conn.commit()
         conn.close()
 
-        alert_msg = f"🚨 NEW DISASTER REPORT\n\n📍 Location: {location}\n🔥 Type: {name}\n⚠️ Severity: {severity}\n\n👤 Reporter: {reporter_name}\n📞 Phone: {reporter_phone or 'Not provided'}"
+        # Map severity number to label for better readability in Telegram
+        severity_labels = {'1': 'Low', '2': 'Moderate', '3': 'Severe', '4': 'Critical', '5': 'Extreme'}
+        severity_text = severity_labels.get(severity, severity)
+
+        # Escape user input for HTML parse mode
+        safe_location = html.escape(location)
+        safe_name = html.escape(name)
+        safe_reporter = html.escape(reporter_name)
+
+        alert_msg = f"🚨 <b>NEW DISASTER REPORT</b>\n\n📍 <b>Location:</b> {safe_location}\n🔥 <b>Type:</b> {safe_name}\n⚠️ <b>Severity:</b> {severity_text}\n\n👤 <b>Reporter:</b> {safe_reporter}\n📞 <b>Phone:</b> {reporter_phone or 'Not provided'}"
+        
+        if latitude and longitude:
+            alert_msg += f"\n🗺️ <a href='https://www.google.com/maps?q={latitude},{longitude}'>View on Map</a>"
+
         if casualties:
-            alert_msg += f"\n🚑 Casualties: {casualties}"
+            alert_msg += f"\n🚑 <b>Casualties:</b> {casualties}"
         if affected_people:
-            alert_msg += f"\n🏠 Affected: {affected_people}"
+            alert_msg += f"\n🏠 <b>Affected:</b> {affected_people}"
 
         send_telegram_alert(alert_msg)
 

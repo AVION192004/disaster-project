@@ -4,6 +4,7 @@ import {
   ArrowLeft, ArrowRight, Navigation, ShieldAlert, X, Activity, Droplets,
   Flame, Wind, Tornado, Mountain, Sun, HelpCircle, Info, PhoneCall, FileText, Camera
 } from 'lucide-react';
+import API_BASE_URL from '../apiConfig';
 
 export default function ReportDisaster() {
   const [formData, setFormData] = useState({
@@ -56,7 +57,7 @@ export default function ReportDisaster() {
 
   const checkBackendHealth = async () => {
     try {
-      const response = await fetch('http://localhost:5000/api/health', {
+      const response = await fetch(`${API_BASE_URL}/api/health`, {
         method: 'GET',
       });
       if (response.ok) {
@@ -137,7 +138,7 @@ export default function ReportDisaster() {
     setError('');
 
     try {
-      const response = await fetch('http://localhost:5000/api/disaster/report', {
+      const response = await fetch(`${API_BASE_URL}/api/disaster/report`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
