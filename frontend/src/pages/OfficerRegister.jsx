@@ -1,6 +1,31 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, Suspense } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { Canvas } from '@react-three/fiber';
+import { Float, Stars, OrbitControls } from '@react-three/drei';
+import { motion } from 'framer-motion';
+import { 
+  ShieldCheck, Mail, Lock, User, Phone, MapPin, 
+  Building2, Navigation, ArrowLeft, Loader, 
+  CheckCircle2, AlertTriangle, UserPlus
+} from 'lucide-react';
 import './Auth.css';
+
+// Animated background sphere for Security/Auth (Matches Login)
+function AuthSphere() {
+  return (
+    <Float speed={1.5} rotationIntensity={0.5} floatIntensity={0.5}>
+      <mesh>
+        <sphereGeometry args={[3, 50, 50]} />
+        <meshStandardMaterial
+          color="#10b981" // Green theme for registration/new accounts
+          wireframe
+          transparent
+          opacity={0.1}
+        />
+      </mesh>
+    </Float>
+  );
+}
 
 const OfficerRegister = () => {
   const navigate = useNavigate();
@@ -16,195 +41,315 @@ const OfficerRegister = () => {
   });
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
+  const [backendStatus, setBackendStatus] = useState('checking');
+  const [isLocating, setIsLocating] = useState(false);
+
+  useEffect(() => {
+    checkBackendHealth();
+  }, []);
+
+  const checkBackendHealth = async () => {
+    try {
+      const response = await fetch('http://localhost:5000/api/health');
+      if (response.ok) {
+        setBackendStatus('online');
+      } else {
+        setBackendStatus('offline');
+      }
+    } catch {
+      setBackendStatus('offline');
+    }
+  };
 
   const handleChange = (e) => {
-    setFormData({
-      ...formData,
-      [e.target.name]: e.target.value
-    });
+    setFormData({ ...formData, [e.target.name]: e.target.value });
+    setError('');
+  };
+
+  const getCurrentLocation = () => {
+    if (!navigator.geolocation) {
+      alert('Geolocation is not supported by your browser');
+      return;
+    }
+    
+    setIsLocating(true);
+    navigator.geolocation.getCurrentPosition(
+      (position) => {
+        setFormData({
+          ...formData,
+          latitude: position.coords.latitude.toFixed(6),
+          longitude: position.coords.longitude.toFixed(6)
+        });
+        setIsLocating(false);
+      },
+      (error) => {
+        alert('Unable to get your location. Please enter manually.');
+        setIsLocating(false);
+      }
+    );
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    setError('');
+    if (backendStatus === 'offline') {
+      setError('❌ Connection failed. Secure terminal offline.');
+      return;
+    }
+
     setLoading(true);
+    setError('');
 
     try {
       const response = await fetch('http://localhost:5000/api/officer/register', {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(formData)
       });
 
       const data = await response.json();
 
       if (response.ok) {
-        alert('Registration successful! Please login.');
+        // Show success and redirect
+        alert('✅ Registration successful! Access permissions granted.');
         navigate('/officer/login');
       } else {
-        setError(data.error || 'Registration failed');
+        setError(data.error || 'Protocol violation: Registration failed.');
       }
     } catch (err) {
-      setError('Network error. Please try again.');
+      setError('❌ Comms failure. Check network connectivity.');
     } finally {
       setLoading(false);
     }
   };
 
-  const getCurrentLocation = () => {
-    if (navigator.geolocation) {
-      navigator.geolocation.getCurrentPosition(
-        (position) => {
-          setFormData({
-            ...formData,
-            latitude: position.coords.latitude.toString(),
-            longitude: position.coords.longitude.toString()
-          });
-        },
-        (error) => {
-          alert('Unable to get your location');
-        }
-      );
-    }
-  };
-
   return (
-    <div className="auth-container">
-      <div className="auth-card">
-        <button className="back-btn" onClick={() => navigate('/')}>
-          ← Back
-        </button>
-        
-        <h1 className="brand-name">Rescuevision</h1>
-        <h2 className="auth-title">Officer Registration</h2>
-        <p className="auth-subtitle">Join our rescue team! 🚒 Register to get started</p>
+    <div className="auth3d">
+      
+      {/* 3D Scene Layer */}
+      <div className="auth3d__canvas">
+        <Canvas camera={{ position: [0, 0, 8] }}>
+          <Suspense fallback={null}>
+            <ambientLight intensity={1} />
+            <Stars radius={100} depth={50} count={3000} factor={4} />
+            <AuthSphere />
+            <OrbitControls enableZoom={false} />
+          </Suspense>
+        </Canvas>
+      </div>
 
-        {error && <div className="error-message">{error}</div>}
+      {/* Back Navigation */}
+      <motion.button 
+        className="auth3d__back" 
+        onClick={() => navigate('/')}
+        initial={{ opacity: 0, x: -20 }}
+        animate={{ opacity: 1, x: 0 }}
+      >
+        <ArrowLeft size={18} />
+        <span>Exit Terminal</span>
+      </motion.button>
 
-        <form onSubmit={handleSubmit} className="auth-form">
-          <div className="form-group">
-            <label>Full Name*</label>
-            <input
-              type="text"
-              name="name"
-              value={formData.name}
-              onChange={handleChange}
-              placeholder="Enter your full name"
-              required
-            />
+      {/* Main Auth Module */}
+      <motion.div 
+        className="auth3d__card"
+        style={{ maxWidth: '600px' }} // Wider for registration fields
+        initial={{ opacity: 0, y: 30, scale: 0.95 }}
+        animate={{ opacity: 1, y: 0, scale: 1 }}
+        transition={{ duration: 0.5, ease: "easeOut" }}
+      >
+        <div className="auth3d__header">
+          <ShieldCheck size={48} color="#10b981" style={{ marginBottom: '1.5rem' }} />
+          <span className="auth3d__brand">RescueVision Network</span>
+          <h1 className="auth3d__title">Register Officer</h1>
+          <p className="auth3d__subtitle">New personnel authorization</p>
+        </div>
+
+        {/* Status Indicator */}
+        <div className={`auth3d__status ${backendStatus === 'online' ? 'auth3d__status--online' : 'auth3d__status--offline'}`}>
+          {backendStatus === 'checking' && <><Loader size={14} className="report3d__spinner" /> Initializing Sync...</>}
+          {backendStatus === 'online' && <><CheckCircle2 size={14} /> Encryption Online</>}
+          {backendStatus === 'offline' && <><AlertTriangle size={14} /> Terminal Offline</>}
+        </div>
+
+        {error && (
+          <motion.div 
+            style={{ padding: '1rem', background: 'rgba(239, 68, 68, 0.15)', border: '1px solid #ef4444', borderRadius: '16px', color: '#fca5a5', fontSize: '0.85rem', marginBottom: '1.5rem', display: 'flex', gap: '0.75rem' }}
+            initial={{ opacity: 0, scale: 0.9 }}
+            animate={{ opacity: 1, scale: 1 }}
+          >
+            <AlertTriangle size={18} />
+            {error}
+          </motion.div>
+        )}
+
+        <form onSubmit={handleSubmit} className="auth3d__form">
+          {/* Two Column Layout for Profile Info */}
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1.5rem' }}>
+            <div className="auth3d__field">
+              <label className="auth3d__label">Full Name</label>
+              <div className="auth3d__input-group">
+                <User className="auth3d__input-icon" size={20} />
+                <input 
+                  type="text" 
+                  name="name"
+                  className="auth3d__input"
+                  placeholder="Officer Name"
+                  value={formData.name}
+                  onChange={handleChange}
+                  required 
+                />
+              </div>
+            </div>
+
+            <div className="auth3d__field">
+              <label className="auth3d__label">Email Address</label>
+              <div className="auth3d__input-group">
+                <Mail className="auth3d__input-icon" size={20} />
+                <input 
+                  type="email" 
+                  name="email"
+                  className="auth3d__input"
+                  placeholder="officer@rescue.com"
+                  value={formData.email}
+                  onChange={handleChange}
+                  required 
+                />
+              </div>
+            </div>
           </div>
 
-          <div className="form-group">
-            <label>Email*</label>
-            <input
-              type="email"
-              name="email"
-              value={formData.email}
-              onChange={handleChange}
-              placeholder="Enter your email"
-              required
-            />
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1.5rem' }}>
+            <div className="auth3d__field">
+              <label className="auth3d__label">Access Code (Password)</label>
+              <div className="auth3d__input-group">
+                <Lock className="auth3d__input-icon" size={20} />
+                <input 
+                  type="password" 
+                  name="password"
+                  className="auth3d__input"
+                  placeholder="Min. 8 characters"
+                  value={formData.password}
+                  onChange={handleChange}
+                  minLength="8"
+                  required 
+                />
+              </div>
+            </div>
+
+            <div className="auth3d__field">
+              <label className="auth3d__label">Direct Phone</label>
+              <div className="auth3d__input-group">
+                <Phone className="auth3d__input-icon" size={20} />
+                <input 
+                  type="tel" 
+                  name="phone"
+                  className="auth3d__input"
+                  placeholder="+1 (555) 000-0000"
+                  value={formData.phone}
+                  onChange={handleChange}
+                  required 
+                />
+              </div>
+            </div>
           </div>
 
-          <div className="form-group">
-            <label>Password*</label>
-            <input
-              type="password"
-              name="password"
-              value={formData.password}
-              onChange={handleChange}
-              placeholder="Min. 8 characters"
-              minLength="8"
-              required
-            />
+          <div className="auth3d__field">
+            <label className="auth3d__label">Assigned Office / Station</label>
+            <div className="auth3d__input-group">
+              <Building2 className="auth3d__input-icon" size={20} />
+              <input 
+                type="text" 
+                name="office_name"
+                className="auth3d__input"
+                placeholder="e.g., Central Disaster Response Hub"
+                value={formData.office_name}
+                onChange={handleChange}
+                required 
+              />
+            </div>
           </div>
 
-          <div className="form-group">
-            <label>Phone Number*</label>
-            <input
-              type="tel"
-              name="phone"
-              value={formData.phone}
-              onChange={handleChange}
-              placeholder="Enter phone number"
-              required
-            />
+          <div className="auth3d__field">
+            <label className="auth3d__label">Geographic Coordinates (GPS)</label>
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr auto', gap: '0.75rem', alignItems: 'center' }}>
+              <div className="auth3d__input-group">
+                <Navigation className="auth3d__input-icon" size={18} />
+                <input 
+                  type="number" 
+                  step="any"
+                  name="latitude"
+                  className="auth3d__input"
+                  placeholder="Lat"
+                  value={formData.latitude}
+                  onChange={handleChange}
+                  required 
+                />
+              </div>
+              <div className="auth3d__input-group">
+                <Navigation className="auth3d__input-icon" size={18} />
+                <input 
+                  type="number" 
+                  step="any"
+                  name="longitude"
+                  className="auth3d__input"
+                  placeholder="Lon"
+                  value={formData.longitude}
+                  onChange={handleChange}
+                  required 
+                />
+              </div>
+              <button 
+                type="button" 
+                onClick={getCurrentLocation}
+                style={{ 
+                  background: 'rgba(59, 130, 246, 0.1)', 
+                  border: '1px solid #3b82f6', 
+                  borderRadius: '12px', 
+                  padding: '12px',
+                  color: '#3b82f6',
+                  cursor: 'pointer'
+                }}
+                disabled={isLocating}
+              >
+                {isLocating ? <Loader size={18} className="report3d__spinner" /> : <MapPin size={18} />}
+              </button>
+            </div>
           </div>
 
-          <div className="form-group">
-            <label>Office Name*</label>
-            <input
-              type="text"
-              name="office_name"
-              value={formData.office_name}
-              onChange={handleChange}
-              placeholder="e.g., Central Rescue Station"
-              required
-            />
-          </div>
-
-          <div className="form-group">
-            <label>Office Address*</label>
-            <textarea
+          <div className="auth3d__field">
+            <label className="auth3d__label">Full Postal Address</label>
+            <textarea 
               name="address"
+              className="auth3d__input"
+              style={{ minHeight: '80px', resize: 'none', paddingLeft: '1rem' }}
+              placeholder="Enter station mailing address"
               value={formData.address}
               onChange={handleChange}
-              placeholder="Enter office address"
-              rows="2"
-              required
+              required 
             />
           </div>
 
-          <div className="location-group">
-            <div className="form-group">
-              <label>Latitude*</label>
-              <input
-                type="number"
-                step="any"
-                name="latitude"
-                value={formData.latitude}
-                onChange={handleChange}
-                placeholder="9.5916"
-                required
-              />
-            </div>
-
-            <div className="form-group">
-              <label>Longitude*</label>
-              <input
-                type="number"
-                step="any"
-                name="longitude"
-                value={formData.longitude}
-                onChange={handleChange}
-                placeholder="76.5222"
-                required
-              />
-            </div>
-          </div>
-
-          <button
-            type="button"
-            onClick={getCurrentLocation}
-            className="location-btn"
+          <button 
+            type="submit" 
+            className="auth3d__submit"
+            style={{ background: 'linear-gradient(135deg, #10b981 0%, #059669 100%)', boxShadow: '0 10px 30px rgba(16, 185, 129, 0.3)' }}
+            disabled={loading || backendStatus === 'offline'}
           >
-            📍 Use Current Location
+            {loading ? <Loader className="report3d__spinner" size={24} /> : <UserPlus size={24} />}
+            {loading ? 'REGISTERING...' : 'REGISTER TERMINAL'}
           </button>
-
-          <button type="submit" className="submit-btn" disabled={loading}>
-            {loading ? 'Registering...' : 'Register'}
-          </button>
-
-          <p className="auth-footer">
-            Already have an account?{' '}
-            <span onClick={() => navigate('/officer/login')} className="link">
-              Login here
-            </span>
-          </p>
         </form>
-      </div>
+
+        <p className="auth3d__footer">
+          Already authorized?{' '}
+          <span 
+            className="auth3d__link"
+            style={{ color: '#10b981' }}
+            onClick={() => navigate('/officer/login')}
+          >
+            Login Here
+          </span>
+        </p>
+      </motion.div>
     </div>
   );
 };

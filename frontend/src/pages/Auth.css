@@ -202,3 +202,25 @@
 }
 
 .auth3d__demo strong { color: #3b82f6; }
+
+/* Animations */
+@keyframes spin-auth {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+.report3d__spinner {
+  animation: spin-auth 2s linear infinite;
+}
+
+/* Responsive */
+@media (max-width: 640px) {
+  .auth3d__card {
+    padding: 2rem;
+    border-radius: 24px;
+  }
+  
+  .auth3d__title {
+    font-size: 1.75rem;
+  }
+}
