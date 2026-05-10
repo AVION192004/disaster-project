@@ -64,6 +64,8 @@ export const NotificationProvider = ({ children }) => {
         title: "🚨 New Disaster Report",
         message: `${data.name} reported at ${data.location}`,
         severity: data.severity,
+        latitude: data.latitude,
+        longitude: data.longitude,
         timestamp: data.timestamp
       });
     });
@@ -74,6 +76,16 @@ export const NotificationProvider = ({ children }) => {
         title: "📊 Status Updated",
         message: `Report #${data.report_id} → ${data.new_status}`,
         timestamp: data.timestamp
+      });
+    });
+
+    socketRef.current.on("broadcast_alert", (data) => {
+      addNotification({
+        type: "broadcast",
+        title: "📢 Broadcast Alert",
+        message: `${data.officer}: ${data.message}`,
+        severity: data.priority,
+        timestamp: new Date().toISOString()
       });
     });
 

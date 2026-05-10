@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
 import Header from "./components/Header";
+import { NotificationProvider } from "./contexts/NotificationContext";
 import HeroSection from "./components/HeroSection";
 import Features from "./components/Features";
 import HowItWorks from "./components/HowItWorks";
@@ -49,134 +50,136 @@ function App() {
 
   return (
     <Router>
-      <div className="App" style={{ backgroundColor: "#0D1117", minHeight: "100vh" }}>
-        <Header />
+      <NotificationProvider>
+        <div className="App" style={{ backgroundColor: "#0D1117", minHeight: "100vh" }}>
+          <Header />
 
-        <Routes>
-          {/* Home Page */}
-          <Route
-            path="/"
-            element={<Home3D />}
-          />
+          <Routes>
+            {/* Home Page */}
+            <Route
+              path="/"
+              element={<Home3D />}
+            />
 
-          {/* Report Disaster */}
-          <Route
-            path="/report-disaster"
-            element={<ReportDisaster3D />}
-          />
+            {/* Report Disaster */}
+            <Route
+              path="/report-disaster"
+              element={<ReportDisaster3D />}
+            />
 
-          {/* Damage Assessment */}
-          <Route
-            path="/damage-assessment"
-            element={
-              <div style={{ ...darkPage, padding: "40px 20px" }}>
-                <DamageAssessment />
-              </div>
-            }
-          />
+            {/* Damage Assessment */}
+            <Route
+              path="/damage-assessment"
+              element={
+                <div style={{ ...darkPage, padding: "40px 20px" }}>
+                  <DamageAssessment />
+                </div>
+              }
+            />
 
-          {/* Features */}
-          <Route
-            path="/features"
-            element={
-              <div style={darkPage}>
-                <Features />
-              </div>
-            }
-          />
+            {/* Features */}
+            <Route
+              path="/features"
+              element={
+                <div style={darkPage}>
+                  <Features />
+                </div>
+              }
+            />
 
-          {/* First Aid */}
-          <Route
-            path="/first-aid"
-            element={
-              <div style={darkPage}>
-                <FirstAid />
-              </div>
-            }
-          />
+            {/* First Aid */}
+            <Route
+              path="/first-aid"
+              element={
+                <div style={darkPage}>
+                  <FirstAid />
+                </div>
+              }
+            />
 
-          {/* Shelter Finder */}
-          <Route
-            path="/shelters"
-            element={
-              <div style={darkPage}>
-                <ShelterFinder />
-              </div>
-            }
-          />
+            {/* Shelter Finder */}
+            <Route
+              path="/shelters"
+              element={
+                <div style={darkPage}>
+                  <ShelterFinder />
+                </div>
+              }
+            />
 
-          {/* Relief Bot */}
-          <Route
-            path="/relief-bot"
-            element={
-              <div style={darkPage}>
-                <ReliefBot />
-              </div>
-            }
-          />
+            {/* Relief Bot */}
+            <Route
+              path="/relief-bot"
+              element={
+                <div style={darkPage}>
+                  <ReliefBot />
+                </div>
+              }
+            />
 
-          {/* SOS Emergency */}
-          <Route
-            path="/sos"
-            element={
-              <div style={darkPage}>
-                <SOSEmergency />
-              </div>
-            }
-          />
+            {/* SOS Emergency */}
+            <Route
+              path="/sos"
+              element={
+                <div style={darkPage}>
+                  <SOSEmergency />
+                </div>
+              }
+            />
 
-          {/* Disaster News */}
-          <Route
-            path="/disaster-news"
-            element={
-              <div style={darkPage}>
-                <DisasterNews />
-              </div>
-            }
-          />
+            {/* Disaster News */}
+            <Route
+              path="/disaster-news"
+              element={
+                <div style={darkPage}>
+                  <DisasterNews />
+                </div>
+              }
+            />
 
 
-          {/* Officer Dashboard & Auth */}
-          <Route path="/signup" element={<OfficerRegister />} />
-          <Route
-            path="/officer/register"
-            element={
-              <div style={darkPage}>
-                <OfficerRegister />
-              </div>
-            }
-          />
-          <Route
-            path="/officer/login"
-            element={
-              <div style={darkPage}>
-                <OfficerLogin />
-              </div>
-            }
-          />
-          <Route 
-            path="/officer/dashboard" 
-            element={
-              <div style={darkPage}>
-                <OfficerDashboard />
-              </div>
-            } 
-          />
+            {/* Officer Dashboard & Auth */}
+            <Route path="/signup" element={<OfficerRegister />} />
+            <Route
+              path="/officer/register"
+              element={
+                <div style={darkPage}>
+                  <OfficerRegister />
+                </div>
+              }
+            />
+            <Route
+              path="/officer/login"
+              element={
+                <div style={darkPage}>
+                  <OfficerLogin />
+                </div>
+              }
+            />
+            <Route 
+              path="/officer/dashboard" 
+              element={
+                <div style={darkPage}>
+                  <OfficerDashboard />
+                </div>
+              } 
+            />
 
-          {/* Admin Panels */}
-          <Route 
-            path="/admin/disaster" 
-            element={
-              <div style={darkPage}>
-                <AdminDisaster />
-              </div>
-            } 
-          />
-        </Routes>
-      </div>
-
-      <ReliefBotFloating />
-      <ThemeToggle />
+            {/* Admin Panels */}
+            <Route 
+              path="/admin/disaster" 
+              element={
+                <div style={darkPage}>
+                  <AdminDisaster />
+                </div>
+              } 
+            />
+          </Routes>
+          
+          <ReliefBotFloating />
+          <ThemeToggle />
+        </div>
+      </NotificationProvider>
     </Router>
   );
 }

@@ -1,5 +1,27 @@
 import React, { useState, useEffect } from "react";
 import "./Overview.css";
+import { MapContainer, TileLayer, Marker, Popup, useMap } from "react-leaflet";
+import L from "leaflet";
+import "leaflet/dist/leaflet.css";
+
+// Fix for default leaflet marker icons
+delete L.Icon.Default.prototype._getIconUrl;
+L.Icon.Default.mergeOptions({
+  iconUrl: "https://unpkg.com/leaflet@1.7.1/dist/images/marker-icon.png",
+  iconRetinaUrl: "https://unpkg.com/leaflet@1.7.1/dist/images/marker-icon-2x.png",
+  shadowUrl: "https://unpkg.com/leaflet@1.7.1/dist/images/marker-shadow.png",
+});
+
+// Component to handle map centering
+function ChangeView({ center }) {
+  const map = useMap();
+  useEffect(() => {
+    if (center) {
+      map.setView(center, 14, { animate: true });
+    }
+  }, [center, map]);
+  return null;
+}
 
 const severityColor = {
   Low:      "#22C55E",
@@ -26,10 +48,17 @@ function StatCard({ label, value, sub, accent }) {
   );
 }
 
-export default function Overview({ onNavigate }) {
+export default function Overview({ onNavigate, focusLocation }) {
   const [stats,   setStats]   = useState(null);
   const [loading, setLoading] = useState(true);
   const [error,   setError]   = useState(null);
+  const [mapCenter, setMapCenter] = useState([10.8505, 76.2711]); // Default Kerala center
+
+  useEffect(() => {
+    if (focusLocation && focusLocation.latitude && focusLocation.longitude) {
+      setMapCenter([focusLocation.latitude, focusLocation.longitude]);
+    }
+  }, [focusLocation]);
 
   useEffect(() => {
     const fetchStats = async () => {
@@ -107,6 +136,48 @@ export default function Overview({ onNavigate }) {
           Report Disaster
         </button>
       </header>
+
+      {/* Map Section */}
+      <section className="ov-card ov-map-card">
+        <MapContainer
+          center={mapCenter}
+          zoom={12}
+          className="ov-map-container"
+          zoomControl={false}
+        >
+          <ChangeView center={mapCenter} />
+          <TileLayer
+            attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+            url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+          />
+          {stats.recent_reports?.filter(r => r.latitude && r.longitude).map(report => (
+            <Marker 
+              key={report.id} 
+              position={[report.latitude, report.longitude]}
+            >
+              <Popup className="ov-map-popup">
+                <div style={{ padding: '4px' }}>
+                  <strong style={{ display: 'block', fontSize: '1rem', marginBottom: '4px' }}>{report.name}</strong>
+                  <span style={{ color: '#8B95A8', fontSize: '0.85rem' }}>{report.location}</span>
+                  <div style={{ marginTop: '8px', display: 'flex', gap: '8px', alignItems: 'center' }}>
+                    <span style={{ 
+                      fontSize: '0.75rem', 
+                      fontWeight: '700', 
+                      padding: '2px 6px', 
+                      borderRadius: '4px',
+                      backgroundColor: `${severityColor[report.severity]}20`,
+                      color: severityColor[report.severity]
+                    }}>
+                      {report.severity}
+                    </span>
+                    <span style={{ color: '#56617A', fontSize: '0.75rem' }}>{report.status}</span>
+                  </div>
+                </div>
+              </Popup>
+            </Marker>
+          ))}
+        </MapContainer>
+      </section>
 
       {/* Stat cards */}
       <div className="ov-stats-grid" aria-label="Incident statistics">

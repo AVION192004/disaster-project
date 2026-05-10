@@ -3,7 +3,7 @@ import { useNotifications } from '../contexts/NotificationContext'; // ✅ Fixed
 import { Bell, X } from 'lucide-react';
 import './NotificationBell.css';
 
-export default function NotificationBell() {
+export default function NotificationBell({ onNotificationClick }) {
   const context = useNotifications();
   const [isOpen, setIsOpen] = useState(false);
 
@@ -13,6 +13,14 @@ export default function NotificationBell() {
   const { notifications, isConnected, removeNotification, markAsRead, clearAll } = context;
 
   const unreadCount = notifications.filter(n => !n.read).length;
+
+  const handleNotificationClick = (notif) => {
+    markAsRead(notif.id);
+    if (onNotificationClick) {
+      onNotificationClick(notif);
+    }
+    setIsOpen(false);
+  };
 
   const getSeverityColor = (severity) => {
     const colors = {
@@ -60,7 +68,7 @@ export default function NotificationBell() {
                 <div
                   key={notif.id}
                   className={`notification-bell__item ${notif.read ? 'read' : 'unread'}`}
-                  onClick={() => markAsRead(notif.id)}
+                  onClick={() => handleNotificationClick(notif)}
                 >
                   <div className="notification-bell__item-content">
                     <div className="notification-bell__item-header">

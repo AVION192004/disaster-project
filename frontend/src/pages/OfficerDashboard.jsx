@@ -7,20 +7,49 @@ import 'leaflet-control-geocoder';
 import { io } from "socket.io-client";
 import ResourceManagementPanel from './ResourceManagementPanel';
 import { Shield, Bell, Download, LogOut, Activity, Users, Truck, Wrench, Menu, X, CheckCircle, Clock, AlertTriangle, Search, Filter } from 'lucide-react';
+import NotificationBell from '../components/NotificationBell';
+import { useNotifications } from '../contexts/NotificationContext';
 
 
 const EnhancedOfficerDashboard = () => {
   const navigate = useNavigate();
+  const { notifications: globalNotifications, markAsRead } = useNotifications();
   const [officer, setOfficer] = useState(null);
   const [reports, setReports] = useState([]);
+  const [pendingFocus, setPendingFocus] = useState(null);
+
+  // Function to center map on coordinates
+  const focusMap = (lat, lon, reportId = null) => {
+    // Try to get numeric coordinates, with a deterministic fallback if missing
+    let targetLat = parseFloat(lat);
+    let targetLon = parseFloat(lon);
+
+    if (isNaN(targetLat) || isNaN(targetLon)) {
+      if (reportId) {
+        // Deterministic fallback matching updateMapMarkers logic
+        targetLat = 9.5915 + (reportId * 0.05) % 0.5;
+        targetLon = 76.5215 + (reportId * 0.03) % 0.5;
+      } else {
+        showToast('Coordinates not available for this report', 'warning');
+        return;
+      }
+    }
+
+    if (mapInstanceRef.current) {
+      mapInstanceRef.current.setView([targetLat, targetLon], 14, { animate: true });
+      setActiveTab('overview');
+    } else {
+      // Map not ready, store for when it is
+      setPendingFocus([targetLat, targetLon]);
+      setActiveTab('overview');
+    }
+  };
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState('overview');
   const [selectedStatus, setSelectedStatus] = useState('All');
   const [selectedSeverity, setSelectedSeverity] = useState('All');
   const [searchQuery, setSearchQuery] = useState('');
-  const [notifications, setNotifications] = useState([]);
-  const [reportNotifications, setReportNotifications] = useState([]);
-  const [showNotifications, setShowNotifications] = useState(false);
+  const [toastNotifications, setToastNotifications] = useState([]);
   const [showQuickActions, setShowQuickActions] = useState(false);
   const [resources, setResources] = useState({
     personnel: { available: 45, deployed: 23, total: 68 },
@@ -29,7 +58,6 @@ const EnhancedOfficerDashboard = () => {
   });
   const [activityFeed, setActivityFeed] = useState([]);
   const [broadcastAlerts, setBroadcastAlerts] = useState([]);
-  const [unreadCount, setUnreadCount] = useState(0);
   const [emergencyAlert, setEmergencyAlert] = useState(null);
   const [statsHistory, setStatsHistory] = useState([]);
   const [showExportMenu, setShowExportMenu] = useState(false);
@@ -47,12 +75,12 @@ const EnhancedOfficerDashboard = () => {
   const showToast = useCallback((message, type = 'info', persist = false) => {
     const id = Date.now();
     const notification = { id, message, type, timestamp: new Date(), persist };
-    setNotifications(prev => [...prev, notification]);
+    setToastNotifications(prev => [...prev, notification]);
 
     // Auto-remove after 5 seconds (unless persist)
     if (!persist) {
       setTimeout(() => {
-        setNotifications(prev => prev.filter(n => n.id !== id));
+        setToastNotifications(prev => prev.filter(n => n.id !== id));
       }, 5000);
     }
   }, []);
@@ -78,9 +106,6 @@ const EnhancedOfficerDashboard = () => {
       }
       return newFeed;
     });
-    if (isUnread) {
-      setUnreadCount(prev => prev + 1);
-    }
   }, [officer]);
 
   // Load persistent activity feed
@@ -93,8 +118,6 @@ const EnhancedOfficerDashboard = () => {
           return age < 24 * 60 * 60 * 1000; // 24h
         });
         setActivityFeed(feed);
-        const unread = feed.filter(a => !a.read).length;
-        setUnreadCount(unread);
       }
     } catch (e) {
       console.warn('Failed to load activity feed:', e);
@@ -132,6 +155,14 @@ const EnhancedOfficerDashboard = () => {
     if (activeTab === 'overview' && mapRef.current && !mapInstanceRef.current) {
       initializeMap();
     }
+    
+    // Cleanup map when switching tabs
+    return () => {
+      if (mapInstanceRef.current && activeTab !== 'overview') {
+        mapInstanceRef.current.remove();
+        mapInstanceRef.current = null;
+      }
+    };
   }, [activeTab]);
 
   // Auto-refresh timer
@@ -148,9 +179,16 @@ const EnhancedOfficerDashboard = () => {
     return () => clearInterval(timer);
   }, [reports]);
 
+  // Update map markers when reports change
+  useEffect(() => {
+    if (mapInstanceRef.current) {
+      updateMapMarkers();
+    }
+  }, [reports, activeTab]);
+
   // Socket.io real-time updates
   useEffect(() => {
-    const socket = io("http://127.0.0.1:5000");
+    const socket = io("http://localhost:5000");
 
     socket.on("connect", () => {
       showToast('Connected to real-time updates', 'success');
@@ -165,17 +203,6 @@ const EnhancedOfficerDashboard = () => {
       showToast(`New ${report.severity} priority report: ${report.name}`,
         report.severity === 'Critical' ? 'error' : 'warning');
       addActivity('New Report', `${report.name} - ${report.location}`);
-      // Push into the dedicated report notifications list
-      setReportNotifications(prev => [{
-        id: report.id || Date.now(),
-        name: report.name,
-        location: report.location,
-        severity: report.severity,
-        reporter: report.reporter_name,
-        timestamp: report.created_at || new Date(),
-        read: false
-      }, ...prev].slice(0, 50));
-      setUnreadCount(prev => prev + 1);
 
       // Check for critical alerts
       if (report.severity === 'Critical') {
@@ -210,12 +237,11 @@ const EnhancedOfficerDashboard = () => {
       }, ...prev].slice(0, 20));
       if (data.officer !== officer?.name) {
         showToast(`📢 Alert from ${data.officer}: ${data.message}`, 'warning', true);
-        setUnreadCount(prev => prev + 1);
       }
     });
 
     return () => socket.disconnect();
-  }, [showToast, addActivity]);
+  }, [showToast, addActivity, officer]);
 
   // Update map markers
   useEffect(() => {
@@ -227,9 +253,6 @@ const EnhancedOfficerDashboard = () => {
   // Close dropdowns on outside click
   useEffect(() => {
     const handleClickOutside = (e) => {
-      if (notificationRef.current && !notificationRef.current.contains(e.target)) {
-        setShowNotifications(false);
-      }
       if (quickActionsRef.current && !quickActionsRef.current.contains(e.target)) {
         setShowQuickActions(false);
       }
@@ -240,6 +263,14 @@ const EnhancedOfficerDashboard = () => {
     document.addEventListener('mousedown', handleClickOutside);
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
+
+  // Handle pending map focus
+  useEffect(() => {
+    if (activeTab === 'overview' && mapInstanceRef.current && pendingFocus) {
+      mapInstanceRef.current.setView(pendingFocus, 14, { animate: true });
+      setPendingFocus(null); // Clear after focusing
+    }
+  }, [activeTab, pendingFocus]);
 
   const initializeMap = () => {
     try {
@@ -296,7 +327,7 @@ const EnhancedOfficerDashboard = () => {
 
   const fetchReports = async () => {
     try {
-      const response = await fetch('http://127.0.0.1:5000/api/disaster/reports');
+      const response = await fetch('http://localhost:5000/api/disaster/reports');
       const data = await response.json();
 
       if (data.success) {
@@ -313,7 +344,7 @@ const EnhancedOfficerDashboard = () => {
 
   const handleUpdateStatus = async (reportId, newStatus) => {
     try {
-      const response = await fetch(`http://127.0.0.1:5000/api/disaster/report/${reportId}`, {
+      const response = await fetch(`http://localhost:5000/api/disaster/report/${reportId}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ status: newStatus }),
@@ -332,7 +363,7 @@ const EnhancedOfficerDashboard = () => {
 
   const handleBroadcastAlert = async (message, priority) => {
     try {
-      const socket = io("http://127.0.0.1:5000");
+      const socket = io("http://localhost:5000");
       socket.emit('broadcast_alert', { message, priority, officer: officer?.name });
       socket.disconnect();
 
@@ -600,35 +631,53 @@ const EnhancedOfficerDashboard = () => {
       gap: '16px',
       alignItems: 'center'
     },
-    notificationBell: {
-      position: 'relative',
-      padding: '12px',
-      background: 'rgba(30, 41, 59, 0.5)',
-      border: '1px solid #334155',
+    button: (type) => ({
+      padding: '10px 18px',
+      background: type === 'primary' ? '#3b82f6' : type === 'danger' ? '#ef4444' : 'rgba(30, 41, 59, 0.5)',
+      border: '1px solid ' + (type === 'primary' ? '#3b82f6' : type === 'danger' ? '#ef4444' : '#334155'),
       borderRadius: '10px',
+      color: 'white',
+      cursor: 'pointer',
+      fontWeight: '600',
+      fontSize: '0.9rem',
+      display: 'flex',
+      alignItems: 'center',
+      gap: '8px',
+      transition: 'all 0.2s'
+    }),
+    dropdown: {
+      position: 'absolute',
+      top: 'calc(100% + 10px)',
+      right: 0,
+      background: '#1e293b',
+      border: '1px solid #334155',
+      borderRadius: '12px',
+      boxShadow: '0 10px 40px rgba(0,0,0,0.5)',
+      zIndex: 1000,
+      minWidth: '220px',
+      overflow: 'hidden'
+    },
+    dropdownItem: {
+      padding: '12px 16px',
       cursor: 'pointer',
       color: '#94a3b8',
-      display: 'flex',
-      alignItems: 'center',
-      justifyContent: 'center',
-      transition: 'all 0.2s'
+      fontSize: '0.9rem',
+      transition: 'all 0.2s',
+      '&:hover': {
+        background: 'rgba(255,255,255,0.05)',
+        color: 'white'
+      }
     },
-    notificationBadge: {
-      position: 'absolute',
-      top: '-6px',
-      right: '-6px',
-      background: '#ef4444',
+    toast: (type) => ({
+      padding: '12px 24px',
+      background: type === 'error' ? '#ef4444' : type === 'success' ? '#10b981' : '#3b82f6',
       color: 'white',
-      borderRadius: '50%',
-      width: '20px',
-      height: '20px',
-      fontSize: '11px',
-      fontWeight: 'bold',
-      display: 'flex',
-      alignItems: 'center',
-      justifyContent: 'center',
-      border: '2px solid #13192b'
-    },
+      borderRadius: '10px',
+      marginBottom: '10px',
+      boxShadow: '0 10px 30px rgba(0,0,0,0.3)',
+      animation: 'slideIn 0.3s ease-out',
+      fontSize: '0.9rem'
+    }),
     emergencyBanner: {
       background: 'linear-gradient(90deg, rgba(239, 68, 68, 0.15), rgba(239, 68, 68, 0.05))',
       borderLeft: '4px solid #ef4444',
@@ -798,112 +847,39 @@ const EnhancedOfficerDashboard = () => {
       borderBottom: '1px solid #1e293b',
       fontSize: '0.85rem',
       display: 'flex',
-      flexDirection: 'column',
-      gap: '4px'
-    },
-    searchBox: {
-      display: 'flex',
-      gap: '12px',
-      marginBottom: '24px',
-      flexWrap: 'wrap'
-    },
-    searchInput: {
-      flex: 1,
-      minWidth: '250px',
-      padding: '12px 16px',
-      background: '#13192b',
-      border: '1px solid #334155',
-      borderRadius: '10px',
-      color: 'white',
-      fontSize: '0.95rem',
-      outline: 'none'
+      gap: '12px'
     },
     select: {
-      padding: '12px 16px',
-      background: '#13192b',
-      border: '1px solid #334155',
-      borderRadius: '10px',
+      background: '#0f172a',
       color: 'white',
-      cursor: 'pointer',
-      minWidth: '150px',
+      border: '1px solid #334155',
+      borderRadius: '8px',
+      padding: '10px',
+      outline: 'none'
+    },
+    input: {
+      background: '#0f172a',
+      color: 'white',
+      border: '1px solid #334155',
+      borderRadius: '8px',
+      padding: '10px',
       outline: 'none',
-      appearance: 'none', // removes default dropdown arrow for cleaner look on some browsers
+      width: '100%'
     },
-    button: (variant) => ({
-      padding: '10px 20px',
-      background: variant === 'primary' ? '#3b82f6'
-        : variant === 'danger' ? 'rgba(239, 68, 68, 0.1)'
-          : variant === 'success' ? '#10b981'
-            : '#1e293b',
-      border: variant === 'danger' ? '1px solid rgba(239, 68, 68, 0.3)' : variant === 'primary' || variant === 'success' ? 'none' : '1px solid #334155',
-      borderRadius: '10px',
-      color: variant === 'danger' ? '#ef4444' : 'white',
-      cursor: 'pointer',
-      fontSize: '0.9rem',
+    badge: (severity) => ({
+      padding: '4px 10px',
+      borderRadius: '20px',
+      fontSize: '11px',
       fontWeight: 'bold',
-      display: 'flex',
-      alignItems: 'center',
-      gap: '8px',
-      transition: 'all 0.2s',
+      background: severity === 'Critical' ? 'rgba(239, 68, 68, 0.15)' : severity === 'High' ? 'rgba(245, 158, 11, 0.15)' : 'rgba(59, 130, 246, 0.15)',
+      color: severity === 'Critical' ? '#ef4444' : severity === 'High' ? '#f59e0b' : '#3b82f6',
+      border: `1px solid ${severity === 'Critical' ? 'rgba(239, 68, 68, 0.3)' : severity === 'High' ? 'rgba(245, 158, 11, 0.3)' : 'rgba(59, 130, 246, 0.3)'}`
     }),
-    reportCard: {
-      background: '#13192b',
-      padding: '24px',
-      borderRadius: '16px',
-      border: '1px solid #1e293b',
-      marginBottom: '16px',
-      transition: 'border-color 0.2s'
-    },
-    toast: (type) => ({
-      position: 'fixed',
-      bottom: '24px',
-      right: '24px',
-      padding: '16px 24px',
-      background: type === 'success' ? '#10b981'
-        : type === 'error' ? '#ef4444'
-          : type === 'warning' ? '#f59e0b'
-            : '#3b82f6',
-      borderRadius: '12px',
-      color: 'white',
-      boxShadow: '0 10px 25px rgba(0,0,0,0.5)',
-      zIndex: 10000,
-      animation: 'slideIn 0.3s cubic-bezier(0.16, 1, 0.3, 1)',
-      display: 'flex',
-      alignItems: 'center',
-      gap: '12px',
-      fontWeight: 'bold'
-    }),
-    dropdown: {
-      position: 'absolute',
-      top: 'calc(100% + 8px)',
-      right: 0,
-      background: '#1e293b',
-      border: '1px solid #334155',
-      borderRadius: '12px',
-      minWidth: '220px',
-      boxShadow: '0 10px 40px rgba(0,0,0,0.6)',
-      zIndex: 1000,
-      overflow: 'hidden'
-    },
-    dropdownItem: {
-      padding: '14px 16px',
-      cursor: 'pointer',
-      borderBottom: '1px solid #1e293b',
-      display: 'flex',
-      alignItems: 'center',
-      gap: '12px',
-      transition: 'background 0.2s ease',
-      fontSize: '0.9rem',
-      color: '#cbd5e1'
-    },
-    quickActionButton: (color) => ({
-      padding: '16px',
-      background: `rgba(${color}, 0.1)`,
-      border: `1px solid rgba(${color}, 0.2)`,
-      borderRadius: '12px',
-      cursor: 'pointer',
-      textAlign: 'center',
-      transition: 'all 0.2s',
+    priorityBadge: (color) => ({
+      padding: '2px 8px',
+      borderRadius: '4px',
+      fontSize: '10px',
+      background: `rgba(${color}, 0.2)`,
       color: `rgb(${color})`,
       fontWeight: 'bold'
     })
@@ -924,7 +900,7 @@ const EnhancedOfficerDashboard = () => {
     <div style={styles.container}>
       {/* Toast Notifications */}
       <div style={{ position: 'fixed', bottom: '20px', right: '20px', zIndex: 9999 }}>
-        {notifications.map(n => (
+        {toastNotifications.map(n => (
           <div key={n.id} style={styles.toast(n.type)}>
             <strong>{n.type.toUpperCase()}:</strong> {n.message}
           </div>
@@ -968,7 +944,7 @@ const EnhancedOfficerDashboard = () => {
             </button>
             {showQuickActions && (
               <div style={styles.dropdown}>
-                <div style={styles.dropdownItem} onClick={() => { handleBroadcastAlert('Test Alert', 'Medium'); setShowQuickActions(false); }}>
+                <div style={styles.dropdownItem} onClick={() => { handleBroadcastAlert('Emergency Alert', 'Medium'); setShowQuickActions(false); }}>
                   📢 Broadcast Alert
                 </div>
                 <div style={styles.dropdownItem} onClick={() => { setActiveTab('reports'); setShowQuickActions(false); }}>
@@ -981,48 +957,12 @@ const EnhancedOfficerDashboard = () => {
             )}
           </div>
 
-          {/* Notifications */}
-          <div ref={notificationRef} style={{ position: 'relative' }}>
-            <button
-              onClick={() => {
-                setShowNotifications(prev => !prev);
-                if (unreadCount > 0) {
-                  setUnreadCount(0);
-                  setReportNotifications(prev => prev.map(n => ({ ...n, read: true })));
-                  setActivityFeed(prev => prev.map(a => ({ ...a, read: true })));
-                  localStorage.setItem('dashboardActivityFeed', JSON.stringify(activityFeed.map(a => ({ ...a, read: true }))));
-                }
-              }}
-              style={styles.notificationBell}
-            >
-              🔔
-              {unreadCount > 0 && <div style={styles.notificationBadge}>{unreadCount > 9 ? '9+' : unreadCount}</div>}
-            </button>
-            {showNotifications && (
-              <div style={{ ...styles.dropdown, minWidth: '340px', maxHeight: '480px', overflowY: 'auto' }}>
-                <div style={{ padding: '14px 16px', borderBottom: '1px solid #1e293b', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                  <strong style={{ fontSize: '0.95rem' }}>🔔 Disaster Reports</strong>
-                  <span style={{ fontSize: '0.75rem', color: '#64748b' }}>{reportNotifications.length} total</span>
-                </div>
-                {reportNotifications.length > 0 ? reportNotifications.map(n => (
-                  <div key={n.id} style={{ ...styles.dropdownItem, flexDirection: 'column', alignItems: 'flex-start', gap: '4px', background: n.read ? 'transparent' : 'rgba(59,130,246,0.05)', borderLeft: n.read ? 'none' : '3px solid #3b82f6' }}>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', width: '100%', alignItems: 'center' }}>
-                      <span style={{ fontWeight: 'bold', fontSize: '0.9rem', color: 'white' }}>🚨 {n.name}</span>
-                      <span style={{ fontSize: '10px', padding: '2px 8px', borderRadius: '4px', background: n.severity === 'Critical' ? '#ef4444' : n.severity === 'High' ? '#f59e0b' : n.severity === 'Medium' ? '#3b82f6' : '#10b981', color: 'white', fontWeight: 'bold' }}>{n.severity}</span>
-                    </div>
-                    <span style={{ fontSize: '12px', color: '#94a3b8' }}>📍 {n.location}</span>
-                    <span style={{ fontSize: '11px', color: '#64748b' }}>👤 {n.reporter} • {new Date(n.timestamp).toLocaleTimeString()}</span>
-                  </div>
-                )) : (
-                  <div style={{ padding: '30px 20px', textAlign: 'center', color: '#64748b' }}>
-                    <div style={{ fontSize: '2rem', marginBottom: '8px' }}>📭</div>
-                    <div>No disaster reports yet</div>
-                    <div style={{ fontSize: '12px', marginTop: '4px' }}>New reports will appear here in real-time</div>
-                  </div>
-                )}
-              </div>
-            )}
-          </div>
+          {/* Notification Center */}
+          <NotificationBell 
+            onNotificationClick={(notif) => {
+              focusMap(notif.latitude, notif.longitude, notif.id);
+            }} 
+          />
 
           {/* Export */}
           <div ref={exportRef} style={{ position: 'relative' }}>
@@ -1099,181 +1039,105 @@ const EnhancedOfficerDashboard = () => {
               { title: 'Total Reports', value: stats.total, color: '#8b5cf6', icon: '📋', trend: '+3' },
               { title: 'Pending', value: stats.pending, color: '#ff9800', icon: '⏳', trend: '-2' },
               { title: 'In Progress', value: stats.inProgress, color: '#2196f3', icon: '🔄', trend: '+1' },
-              { title: 'Completed', value: stats.completed, color: '#4caf50', icon: '✅', trend: '+5' },
-              { title: 'Critical', value: stats.critical, color: '#ff5252', icon: '🚨', trend: '0' },
-              { title: 'Resolution Rate', value: `${stats.resolutionRate}%`, color: '#4caf50', icon: '📊', trend: '+5%' }
-            ].map((stat, idx) => (
-              <div key={idx} style={styles.statCard(stat.color)}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                  <span style={{ fontSize: '24px' }}>{stat.icon}</span>
-                  <span style={styles.statTrend(!stat.trend.startsWith('-'))}>
-                    {stat.trend.startsWith('+') ? '↑' : stat.trend.startsWith('-') ? '↓' : '•'} {stat.trend}
-                  </span>
+              { title: 'Completed', value: stats.completed, color: '#4caf50', icon: '✅', trend: '+5' }
+            ].map(stat => (
+              <div key={stat.title} style={styles.statCard(stat.color)}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+                  <div style={styles.statLabel}>{stat.title}</div>
+                  <div style={{ fontSize: '20px' }}>{stat.icon}</div>
                 </div>
                 <div style={styles.statValue(stat.color)}>{stat.value}</div>
-                <div style={styles.statLabel}>{stat.title}</div>
+                <div style={styles.statTrend(stat.trend.startsWith('+'))}>
+                  {stat.trend.startsWith('+') ? '↑' : '↓'} {stat.trend} this week
+                </div>
+                <div style={{
+                  position: 'absolute',
+                  right: '-10px',
+                  bottom: '-10px',
+                  fontSize: '80px',
+                  opacity: 0.05,
+                  color: stat.color
+                }}>
+                  {stat.icon}
+                </div>
               </div>
             ))}
           </div>
 
-          {/* Map and Priority Cases */}
           <div style={styles.mainGrid}>
-            {/* Map */}
+            {/* Real-time Map */}
             <div style={styles.card}>
               <div style={styles.cardHeader}>
-                <h3 style={styles.cardTitle}>📍 Incident Map</h3>
+                <h3 style={styles.cardTitle}>📍 Geographic Incident Overview</h3>
                 <div style={{ display: 'flex', gap: '10px' }}>
-                  <button onClick={() => {
-                    const map = mapInstanceRef.current;
-                    if (map && map.layers) {
-                      map.removeLayer(map.layers[map.currentLayer]);
-                      const nextLayer = map.currentLayer === 'street' ? 'satellite' : map.currentLayer === 'satellite' ? 'terrain' : 'street';
-                      map.layers[nextLayer].addTo(map);
-                      map.currentLayer = nextLayer;
-                    }
-                  }} style={{ padding: '6px 12px', background: 'rgba(255,255,255,0.1)', border: 'none', borderRadius: '6px', color: 'white', cursor: 'pointer', fontSize: '12px' }}>
-                    🗺️ Layer
-                  </button>
+                  <select
+                    value={mapLayer}
+                    onChange={(e) => setMapLayer(e.target.value)}
+                    style={{ ...styles.select, padding: '5px 10px', fontSize: '12px' }}
+                  >
+                    <option value="street">Street View</option>
+                    <option value="satellite">Satellite View</option>
+                    <option value="terrain">Terrain View</option>
+                  </select>
                 </div>
               </div>
               <div style={styles.cardBody}>
-                <div ref={mapRef} style={styles.mapContainer} />
+                <div ref={mapRef} style={styles.mapContainer}></div>
               </div>
             </div>
 
-            {/* High Priority & Resources */}
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '15px' }}>
-              {/* High Priority Cases */}
+            {/* High Priority Sidebar */}
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
               <div style={styles.card}>
-                <div style={{ ...styles.cardHeader, background: 'linear-gradient(90deg, rgba(255,82,82,0.2), transparent)' }}>
-                  <h3 style={{ ...styles.cardTitle, color: '#ff5252' }}>🚨 High Priority Cases</h3>
+                <div style={styles.cardHeader}>
+                  <h3 style={styles.cardTitle}>🔥 High Priority Cases</h3>
                 </div>
-                <div style={{ ...styles.cardBody, maxHeight: '200px', overflowY: 'auto' }}>
+                <div style={{ ...styles.cardBody, padding: '15px' }}>
                   {highPriorityReports.length > 0 ? highPriorityReports.map(report => (
-                    <div key={report.id} style={styles.priorityItem}>
-                      <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '5px' }}>
-                        <strong style={{ fontSize: '14px' }}>{report.name}</strong>
-                        <span style={{
-                          background: getSeverityColor(report.severity),
-                          padding: '2px 8px',
-                          borderRadius: '4px',
-                          fontSize: '11px',
-                          color: 'white'
-                        }}>
-                          {report.severity}
-                        </span>
+                    <div
+                      key={report.id}
+                      style={{ ...styles.priorityItem, borderLeftColor: getSeverityColor(report.severity) }}
+                      onClick={() => focusMap(report.latitude, report.longitude, report.id)}
+                    >
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                        <span style={{ fontWeight: 'bold', fontSize: '14px' }}>{report.name}</span>
+                        <span style={styles.badge(report.severity)}>{report.severity}</span>
                       </div>
-                      <div style={{ fontSize: '12px', color: '#aaa' }}>📍 {report.location}</div>
-                      <div style={{ fontSize: '11px', color: '#888', marginTop: '5px' }}>
-                        ⏱ {getResponseTime(report.created_at)} ago
+                      <div style={{ fontSize: '12px', color: '#888' }}>📍 {report.location}</div>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: '5px' }}>
+                        <span style={{ fontSize: '11px', color: '#666' }}>👤 {report.reporter_name}</span>
+                        <span style={{ fontSize: '11px', color: '#666' }}>⏱ {getResponseTime(report.created_at)} ago</span>
                       </div>
                     </div>
                   )) : (
-                    <p style={{ color: '#666', textAlign: 'center', padding: '20px' }}>No high priority cases</p>
+                    <p style={{ textAlign: 'center', color: '#666', padding: '20px' }}>No high priority cases</p>
                   )}
                 </div>
               </div>
 
-              {/* Resources Overview */}
+              {/* Resource Status Brief */}
               <div style={styles.card}>
                 <div style={styles.cardHeader}>
-                  <h3 style={styles.cardTitle}>🚒 Resource Status</h3>
+                  <h3 style={styles.cardTitle}>🚒 Resource Deployment</h3>
                 </div>
-                <div style={styles.cardBody}>
-                  <div style={styles.resourceGrid}>
-                    {[
-                      { type: 'personnel', icon: '👥', label: 'Personnel', ...resources.personnel, color: '#8b5cf6' },
-                      { type: 'vehicles', icon: '🚒', label: 'Vehicles', ...resources.vehicles, color: '#ff9800' },
-                      { type: 'equipment', icon: '🔧', label: 'Equipment', ...resources.equipment, color: '#2196f3' }
-                    ].map(r => (
-                      <div key={r.type} style={styles.resourceCard(r.type)}>
-                        <div style={{ fontSize: '24px', marginBottom: '5px' }}>{r.icon}</div>
-                        <div style={{ fontSize: '20px', fontWeight: 'bold', color: r.color }}>{r.available}</div>
-                        <div style={{ fontSize: '11px', color: '#888' }}>{r.label} Available</div>
+                <div style={{ ...styles.cardBody, padding: '15px' }}>
+                  {['personnel', 'vehicles', 'equipment'].map(type => {
+                    const data = resources[type];
+                    const percent = Math.round((data.deployed / data.total) * 100);
+                    return (
+                      <div key={type} style={{ marginBottom: '15px' }}>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '12px', marginBottom: '5px' }}>
+                          <span style={{ textTransform: 'capitalize' }}>{type}</span>
+                          <span style={{ color: '#888' }}>{data.deployed}/{data.total} deployed</span>
+                        </div>
                         <div style={styles.progressBar}>
-                          <div style={styles.progressFill((r.deployed / r.total) * 100, r.color)} />
-                        </div>
-                        <div style={{ fontSize: '10px', color: '#666', marginTop: '5px' }}>
-                          {r.deployed}/{r.total} deployed
+                          <div style={styles.progressFill(percent, '#3b82f6')}></div>
                         </div>
                       </div>
-                    ))}
-                  </div>
+                    );
+                  })}
                 </div>
               </div>
-
-              {/* Activity Feed */}
-              <div style={styles.card}>
-                <div style={styles.cardHeader}>
-                  <h3 style={styles.cardTitle}>📝 Recent Activity</h3>
-                </div>
-                <div style={{ ...styles.cardBody, maxHeight: '150px', overflowY: 'auto', padding: '10px' }}>
-                  {activityFeed.length > 0 ? activityFeed.slice(0, 5).map(a => (
-                    <div key={a.id} style={styles.activityItem}>
-                      <span style={{ color: '#8b5cf6' }}>{a.action}</span>: {a.details}
-                      <span style={{ float: 'right', color: '#666', fontSize: '11px' }}>
-                        {new Date(a.timestamp).toLocaleTimeString()}
-                      </span>
-                    </div>
-                  )) : (
-                    <p style={{ color: '#666', textAlign: 'center', padding: '10px' }}>No recent activity</p>
-                  )}
-                </div>
-              </div>
-            </div>
-          </div>
-
-          {/* Broadcast Alert History */}
-          <div style={styles.card}>
-            <div style={{ ...styles.cardHeader, background: 'linear-gradient(90deg, rgba(245,158,11,0.1), transparent)' }}>
-              <h3 style={{ ...styles.cardTitle, color: '#f59e0b' }}>📢 Broadcast Alert History</h3>
-              <button
-                onClick={() => {
-                  const msg = window.prompt('Enter broadcast message:');
-                  const pri = window.prompt('Enter priority (Low/Medium/High/Critical):', 'High');
-                  if (msg) handleBroadcastAlert(msg, pri || 'High');
-                }}
-                style={{ ...styles.button('primary'), padding: '8px 16px', fontSize: '0.85rem', background: 'rgba(245,158,11,0.15)', border: '1px solid rgba(245,158,11,0.3)', color: '#f59e0b' }}
-              >
-                📢 Send New Alert
-              </button>
-            </div>
-            <div style={{ ...styles.cardBody, maxHeight: '220px', overflowY: 'auto', padding: '0' }}>
-              {broadcastAlerts.length > 0 ? broadcastAlerts.map(alert => (
-                <div key={alert.id} style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '14px',
-                  padding: '14px 20px',
-                  borderBottom: '1px solid #1e293b'
-                }}>
-                  <div style={{
-                    width: '38px', height: '38px', borderRadius: '10px', flexShrink: 0,
-                    background: alert.priority === 'Critical' ? 'rgba(239,68,68,0.15)' : alert.priority === 'High' ? 'rgba(245,158,11,0.15)' : 'rgba(59,130,246,0.15)',
-                    display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '18px'
-                  }}>
-                    {alert.priority === 'Critical' ? '🚨' : alert.priority === 'High' ? '⚠️' : '📢'}
-                  </div>
-                  <div style={{ flex: 1 }}>
-                    <div style={{ fontWeight: 'bold', fontSize: '0.9rem', color: 'white', marginBottom: '2px' }}>{alert.message}</div>
-                    <div style={{ fontSize: '12px', color: '#94a3b8' }}>Sent by {alert.officer}</div>
-                  </div>
-                  <div style={{ textAlign: 'right', flexShrink: 0 }}>
-                    <div style={{ fontSize: '11px', padding: '3px 10px', borderRadius: '20px', fontWeight: 'bold',
-                      background: alert.priority === 'Critical' ? 'rgba(239,68,68,0.2)' : alert.priority === 'High' ? 'rgba(245,158,11,0.2)' : 'rgba(59,130,246,0.2)',
-                      color: alert.priority === 'Critical' ? '#ef4444' : alert.priority === 'High' ? '#f59e0b' : '#3b82f6'
-                    }}>
-                      {alert.priority}
-                    </div>
-                    <div style={{ fontSize: '11px', color: '#64748b', marginTop: '4px' }}>{new Date(alert.timestamp).toLocaleTimeString()}</div>
-                  </div>
-                </div>
-              )) : (
-                <div style={{ padding: '30px', textAlign: 'center', color: '#64748b' }}>
-                  <div style={{ fontSize: '2rem', marginBottom: '8px' }}>📭</div>
-                  <div>No broadcasts sent yet</div>
-                </div>
-              )}
             </div>
           </div>
         </>
@@ -1281,205 +1145,154 @@ const EnhancedOfficerDashboard = () => {
 
       {/* Reports Tab */}
       {activeTab === 'reports' && (
-        <>
-          {/* Search and Filter */}
-          <div style={styles.searchBox}>
-            <input
-              type="text"
-              placeholder="🔍 Search by name, location, or reporter..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              style={styles.searchInput}
-            />
-            <select
-              value={selectedStatus}
-              onChange={(e) => setSelectedStatus(e.target.value)}
-              style={styles.select}
-            >
-              <option value="All">All Status</option>
-              <option value="Pending">Pending</option>
-              <option value="In Progress">In Progress</option>
-              <option value="Completed">Completed</option>
-            </select>
-            <select
-              value={selectedSeverity}
-              onChange={(e) => setSelectedSeverity(e.target.value)}
-              style={styles.select}
-            >
-              <option value="All">All Severity</option>
-              <option value="Critical">Critical</option>
-              <option value="High">High</option>
-              <option value="Medium">Medium</option>
-              <option value="Low">Low</option>
-            </select>
-            <input
-              type="date"
-              value={dateRange.start}
-              onChange={(e) => setDateRange(prev => ({ ...prev, start: e.target.value }))}
-              style={{ ...styles.select, width: 'auto' }}
-            />
-            <span style={{ padding: '12px', color: '#666' }}>to</span>
-            <input
-              type="date"
-              value={dateRange.end}
-              onChange={(e) => setDateRange(prev => ({ ...prev, end: e.target.value }))}
-              style={{ ...styles.select, width: 'auto' }}
-            />
-          </div>
-
-          {/* Results Count */}
-          <div style={{ marginBottom: '15px', color: '#888', fontSize: '14px' }}>
-            Showing {filteredReports.length} of {reports.length} reports
-          </div>
-
-          {/* Reports List */}
-          {filteredReports.length === 0 ? (
-            <div style={{ textAlign: 'center', padding: '50px', color: '#666' }}>
-              <div style={{ fontSize: '48px', marginBottom: '15px' }}>📭</div>
-              <p>No reports found matching your criteria</p>
+        <div style={styles.card}>
+          <div style={styles.cardHeader}>
+            <div style={{ display: 'flex', gap: '15px', flex: 1, flexWrap: 'wrap' }}>
+              <div style={{ position: 'relative', flex: 1, minWidth: '200px' }}>
+                <Search size={18} style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', color: '#4b5563' }} />
+                <input
+                  type="text"
+                  placeholder="Search incidents, locations, or reporters..."
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  style={{ ...styles.input, paddingLeft: '40px' }}
+                />
+              </div>
+              <select
+                value={selectedStatus}
+                onChange={(e) => setSelectedStatus(e.target.value)}
+                style={styles.select}
+              >
+                <option value="All">All Statuses</option>
+                <option value="Pending">⏳ Pending</option>
+                <option value="In Progress">🔄 In Progress</option>
+                <option value="Completed">✅ Completed</option>
+              </select>
+              <select
+                value={selectedSeverity}
+                onChange={(e) => setSelectedSeverity(e.target.value)}
+                style={styles.select}
+              >
+                <option value="All">All Severities</option>
+                <option value="Critical">🔴 Critical</option>
+                <option value="High">🟠 High</option>
+                <option value="Medium">🔵 Medium</option>
+                <option value="Low">🟢 Low</option>
+              </select>
             </div>
-          ) : (
-            <div style={{ display: 'grid', gap: '15px' }}>
-              {filteredReports.map(report => (
-                <div key={report.id} style={styles.reportCard}>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'start', marginBottom: '15px' }}>
-                    <div>
-                      <h3 style={{ margin: '0 0 8px', fontSize: '18px' }}>📍 {report.name}</h3>
-                      <p style={{ color: '#aaa', margin: '0 0 5px', fontSize: '14px' }}>📍 {report.location}</p>
-                      <p style={{ color: '#888', margin: 0, fontSize: '13px' }}>👤 Reported by: {report.reporter_name}</p>
-                    </div>
-                    <div style={{ display: 'flex', gap: '10px' }}>
-                      <span style={{
-                        padding: '6px 12px',
-                        borderRadius: '6px',
-                        background: getSeverityColor(report.severity),
-                        color: 'white',
-                        fontWeight: 'bold',
-                        fontSize: '13px'
-                      }}>
-                        {report.severity}
-                      </span>
-                      <span style={{
-                        padding: '6px 12px',
-                        borderRadius: '6px',
-                        background: getStatusColor(report.status),
-                        color: 'white',
-                        fontSize: '13px'
-                      }}>
-                        {report.status}
-                      </span>
-                    </div>
-                  </div>
-
-                  {report.description && (
-                    <p style={{ color: '#bbb', marginBottom: '15px', fontSize: '14px', lineHeight: '1.5' }}>
-                      📝 {report.description}
-                    </p>
+          </div>
+          <div style={{ overflowX: 'auto' }}>
+            {loading ? (
+              <div style={{ padding: '50px', textAlign: 'center' }}>Loading reports...</div>
+            ) : (
+              <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left' }}>
+                <thead style={{ background: 'rgba(255,255,255,0.02)', borderBottom: '1px solid rgba(255,255,255,0.05)' }}>
+                  <tr>
+                    <th style={{ padding: '15px 20px', fontSize: '13px', color: '#666' }}>ID</th>
+                    <th style={{ padding: '15px 20px', fontSize: '13px', color: '#666' }}>INCIDENT</th>
+                    <th style={{ padding: '15px 20px', fontSize: '13px', color: '#666' }}>LOCATION</th>
+                    <th style={{ padding: '15px 20px', fontSize: '13px', color: '#666' }}>SEVERITY</th>
+                    <th style={{ padding: '15px 20px', fontSize: '13px', color: '#666' }}>STATUS</th>
+                    <th style={{ padding: '15px 20px', fontSize: '13px', color: '#666' }}>ACTIONS</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {filteredReports.length > 0 ? filteredReports.map(report => (
+                    <tr key={report.id} style={{ borderBottom: '1px solid rgba(255,255,255,0.02)', transition: 'background 0.2s' }}>
+                      <td style={{ padding: '15px 20px', fontSize: '14px', fontWeight: 'bold' }}>#{report.id}</td>
+                      <td style={{ padding: '15px 20px' }}>
+                        <div style={{ fontWeight: '600', fontSize: '15px' }}>{report.name}</div>
+                        <div style={{ fontSize: '12px', color: '#666', marginTop: '2px' }}>{new Date(report.created_at).toLocaleString()}</div>
+                      </td>
+                      <td style={{ padding: '15px 20px', fontSize: '14px' }}>{report.location}</td>
+                      <td style={{ padding: '15px 20px' }}>
+                        <span style={styles.badge(report.severity)}>{report.severity}</span>
+                      </td>
+                      <td style={{ padding: '15px 20px' }}>
+                        <span style={{
+                          padding: '4px 10px',
+                          borderRadius: '6px',
+                          fontSize: '12px',
+                          fontWeight: '600',
+                          background: `${getStatusColor(report.status)}20`,
+                          color: getStatusColor(report.status)
+                        }}>
+                          {report.status}
+                        </span>
+                      </td>
+                      <td style={{ padding: '15px 20px' }}>
+                        <div style={{ display: 'flex', gap: '10px' }}>
+                          <button
+                            onClick={() => focusMap(report.latitude, report.longitude, report.id)}
+                            style={{ background: 'rgba(59, 130, 246, 0.1)', border: 'none', color: '#3b82f6', padding: '6px 12px', borderRadius: '6px', cursor: 'pointer', fontSize: '12px' }}
+                          >
+                            🗺️ Map
+                          </button>
+                          <select
+                            value={report.status}
+                            onChange={(e) => handleUpdateStatus(report.id, e.target.value)}
+                            style={{ ...styles.select, padding: '5px 8px', fontSize: '12px' }}
+                          >
+                            <option value="Pending">Pending</option>
+                            <option value="In Progress">In Progress</option>
+                            <option value="Completed">Completed</option>
+                          </select>
+                        </div>
+                      </td>
+                    </tr>
+                  )) : (
+                    <tr>
+                      <td colSpan="6" style={{ padding: '40px', textAlign: 'center', color: '#666' }}>No matching reports found</td>
+                    </tr>
                   )}
-
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', paddingTop: '15px', borderTop: '1px solid rgba(255,255,255,0.1)' }}>
-                    <div style={{ fontSize: '12px', color: '#888' }}>
-                      📅 {new Date(report.created_at).toLocaleString()} • ⏱ {getResponseTime(report.created_at)} ago
-                    </div>
-                    <div style={{ display: 'flex', gap: '10px', alignItems: 'center' }}>
-                      <select
-                        value={report.status}
-                        onChange={(e) => handleUpdateStatus(report.id, e.target.value)}
-                        style={{ ...styles.select, padding: '8px 12px', fontSize: '13px' }}
-                      >
-                        <option value="Pending">⏳ Pending</option>
-                        <option value="In Progress">🔄 In Progress</option>
-                        <option value="Completed">✅ Completed</option>
-                      </select>
-                      <button
-                        onClick={() => handleDeployResources(report.id, 'personnel')}
-                        style={{ ...styles.button('primary'), padding: '8px 15px', fontSize: '13px' }}
-                      >
-                        🚀 Deploy
-                      </button>
-                    </div>
-                  </div>
-                </div>
-              ))}
-            </div>
-          )}
-        </>
+                </tbody>
+              </table>
+            )}
+          </div>
+        </div>
       )}
 
-      {/* Resources Tab */}
-      {activeTab === 'resources' && (
-        <ResourceManagementPanel
-          resources={resources}
-          onUpdateResources={setResources}
-          addActivity={addActivity}
-          showToast={showToast}
-        />
-      )}
-
-      {/* Analytics Tab */}
+      {/* Broadcast Sidebar - Always available as pop-out or special section */}
       {activeTab === 'analytics' && (
-        <div style={{ display: 'grid', gap: '20px' }}>
-          {/* Summary Stats */}
+        <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr', gap: '20px' }}>
           <div style={styles.card}>
             <div style={styles.cardHeader}>
-              <h3 style={styles.cardTitle}>📊 Performance Analytics</h3>
+              <h3 style={styles.cardTitle}>📡 Broadcast Alert History</h3>
             </div>
-            <div style={styles.cardBody}>
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '20px' }}>
-                <div style={{ textAlign: 'center', padding: '20px', background: 'rgba(139, 92, 246, 0.1)', borderRadius: '12px' }}>
-                  <div style={{ fontSize: '48px', fontWeight: 'bold', color: '#8b5cf6' }}>{stats.resolutionRate}%</div>
-                  <div style={{ fontSize: '14px', color: '#888' }}>Resolution Rate</div>
-                </div>
-                <div style={{ textAlign: 'center', padding: '20px', background: 'rgba(33, 150, 243, 0.1)', borderRadius: '12px' }}>
-                  <div style={{ fontSize: '48px', fontWeight: 'bold', color: '#2196f3' }}>2h 15m</div>
-                  <div style={{ fontSize: '14px', color: '#888' }}>Avg Response Time</div>
-                </div>
-                <div style={{ textAlign: 'center', padding: '20px', background: 'rgba(76, 175, 80, 0.1)', borderRadius: '12px' }}>
-                  <div style={{ fontSize: '48px', fontWeight: 'bold', color: '#4caf50' }}>{stats.completed}</div>
-                  <div style={{ fontSize: '14px', color: '#888' }}>Cases Resolved</div>
-                </div>
-                <div style={{ textAlign: 'center', padding: '20px', background: 'rgba(255, 152, 0, 0.1)', borderRadius: '12px' }}>
-                  <div style={{ fontSize: '48px', fontWeight: 'bold', color: '#ff9800' }}>{stats.pending}</div>
-                  <div style={{ fontSize: '14px', color: '#888' }}>Pending Cases</div>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          {/* Severity Distribution */}
-          <div style={styles.card}>
-            <div style={styles.cardHeader}>
-              <h3 style={styles.cardTitle}>🎯 Severity Distribution</h3>
-            </div>
-            <div style={styles.cardBody}>
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '15px' }}>
-                {[
-                  { label: 'Critical', count: stats.critical, color: '#ff5252', percentage: stats.total > 0 ? ((stats.critical / stats.total) * 100).toFixed(1) : 0 },
-                  { label: 'High', count: stats.high, color: '#ff9800', percentage: stats.total > 0 ? ((stats.high / stats.total) * 100).toFixed(1) : 0 },
-                  { label: 'Medium', count: stats.total - stats.critical - stats.high - reports.filter(r => r.severity === 'Low').length, color: '#2196f3', percentage: stats.total > 0 ? (((stats.total - stats.critical - stats.high - reports.filter(r => r.severity === 'Low').length) / stats.total) * 100).toFixed(1) : 0 },
-                  { label: 'Low', count: reports.filter(r => r.severity === 'Low').length, color: '#4caf50', percentage: stats.total > 0 ? ((reports.filter(r => r.severity === 'Low').length / stats.total) * 100).toFixed(1) : 0 }
-                ].map(s => (
-                  <div key={s.label} style={{ textAlign: 'center', padding: '15px', background: `${s.color}15`, borderRadius: '10px', border: `1px solid ${s.color}40` }}>
-                    <div style={{ fontSize: '28px', fontWeight: 'bold', color: s.color }}>{s.count}</div>
-                    <div style={{ fontSize: '12px', color: '#888', marginTop: '5px' }}>{s.label}</div>
-                    <div style={{ fontSize: '11px', color: s.color, marginTop: '3px' }}>{s.percentage}%</div>
+            <div style={{ ...styles.cardBody, maxHeight: '400px', overflowY: 'auto' }}>
+              {broadcastAlerts.length > 0 ? broadcastAlerts.map(alert => (
+                <div key={alert.id} style={{
+                  padding: '15px',
+                  background: alert.priority === 'High' ? 'rgba(239, 68, 68, 0.05)' : 'rgba(59, 130, 246, 0.05)',
+                  borderRadius: '12px',
+                  marginBottom: '15px',
+                  border: `1px solid ${alert.priority === 'High' ? 'rgba(239, 68, 68, 0.2)' : 'rgba(59, 130, 246, 0.2)'}`
+                }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '5px' }}>
+                    <span style={{ fontWeight: 'bold', fontSize: '14px' }}>{alert.officer}</span>
+                    <span style={styles.priorityBadge(alert.priority === 'High' ? '239, 68, 68' : '59, 130, 246')}>{alert.priority}</span>
                   </div>
-                ))}
-              </div>
+                  <p style={{ margin: 0, fontSize: '14px' }}>{alert.message}</p>
+                  <div style={{ textAlign: 'right', fontSize: '11px', color: '#666', marginTop: '8px' }}>
+                    {new Date(alert.timestamp).toLocaleString()}
+                  </div>
+                </div>
+              )) : (
+                <p style={{ textAlign: 'center', color: '#666', padding: '30px' }}>No broadcast history</p>
+              )}
             </div>
           </div>
 
-          {/* Activity Timeline */}
           <div style={styles.card}>
             <div style={styles.cardHeader}>
-              <h3 style={styles.cardTitle}>📈 Activity Timeline</h3>
+              <h3 style={styles.cardTitle}>📜 Activity Feed</h3>
             </div>
-            <div style={{ ...styles.cardBody, maxHeight: '300px', overflowY: 'auto' }}>
+            <div style={{ ...styles.cardBody, maxHeight: '400px', overflowY: 'auto', padding: '0 15px' }}>
               {activityFeed.length > 0 ? activityFeed.map(a => (
                 <div key={a.id} style={{
                   display: 'flex',
                   gap: '15px',
-                  padding: '12px 0',
+                  padding: '15px 0',
                   borderBottom: '1px solid rgba(255,255,255,0.05)'
                 }}>
                   <div style={{
@@ -1508,6 +1321,16 @@ const EnhancedOfficerDashboard = () => {
             </div>
           </div>
         </div>
+      )}
+
+      {/* Resources Tab */}
+      {activeTab === 'resources' && (
+        <ResourceManagementPanel
+          resources={resources}
+          onUpdateResources={setResources}
+          addActivity={addActivity}
+          showToast={showToast}
+        />
       )}
 
       {/* Footer */}

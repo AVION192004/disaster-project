@@ -17,7 +17,9 @@ export default function ReportDisaster() {
     injured: '',
     missing: '',
     deceased: '',
-    displaced: ''
+    displaced: '',
+    latitude: '',
+    longitude: ''
   });
   const [selectedFiles, setSelectedFiles] = useState([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -76,7 +78,13 @@ export default function ReportDisaster() {
     navigator.geolocation.getCurrentPosition(
       (position) => {
         setIsLocating(false);
-        setFormData(prev => ({ ...prev, location: `${position.coords.latitude.toFixed(6)}, ${position.coords.longitude.toFixed(6)}` }));
+        const { latitude, longitude } = position.coords;
+        setFormData(prev => ({ 
+          ...prev, 
+          location: `${latitude.toFixed(6)}, ${longitude.toFixed(6)}`,
+          latitude: latitude.toFixed(6),
+          longitude: longitude.toFixed(6)
+        }));
       },
       () => { setIsLocating(false); setError('Unable to auto-detect location. Please type it manually.'); }
     );
@@ -115,6 +123,8 @@ export default function ReportDisaster() {
           missing: parseInt(formData.missing || 0),
           deceased: parseInt(formData.deceased || 0),
           affected_people: parseInt(formData.displaced || 0),
+          latitude: formData.latitude,
+          longitude: formData.longitude,
         }),
       });
       const data = await response.json();

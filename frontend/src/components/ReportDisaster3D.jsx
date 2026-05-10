@@ -17,7 +17,9 @@ export default function ReportDisaster() {
     injured: '',
     missing: '',
     deceased: '',
-    displaced: ''
+    displaced: '',
+    latitude: null,
+    longitude: null
   });
   const [selectedFiles, setSelectedFiles] = useState([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -94,7 +96,9 @@ export default function ReportDisaster() {
         setIsLocating(false);
         setFormData(prev => ({
           ...prev,
-          location: `${position.coords.latitude.toFixed(6)}, ${position.coords.longitude.toFixed(6)}`
+          location: `${position.coords.latitude.toFixed(6)}, ${position.coords.longitude.toFixed(6)}`,
+          latitude: position.coords.latitude,
+          longitude: position.coords.longitude
         }));
       },
       (err) => {
@@ -148,7 +152,9 @@ export default function ReportDisaster() {
           reporter_email: formData.reporterEmail,
           // Sending combined casualties since backend expects single field
           casualties: parseInt(formData.injured || 0) + parseInt(formData.deceased || 0) + parseInt(formData.missing || 0),
-          affected_people: parseInt(formData.displaced || 0)
+          affected_people: parseInt(formData.displaced || 0),
+          latitude: formData.latitude,
+          longitude: formData.longitude
         }),
       });
 
@@ -176,7 +182,8 @@ export default function ReportDisaster() {
     setError('');
     setFormData({
       disasterType: '', severity: '', location: '', description: '',
-      reporterName: '', reporterPhone: '', reporterEmail: '', injured: '', missing: '', deceased: '', displaced: ''
+      reporterName: '', reporterPhone: '', reporterEmail: '', injured: '', missing: '', deceased: '', displaced: '',
+      latitude: null, longitude: null
     });
     setSelectedFiles([]);
     window.scrollTo({ top: 0, behavior: 'smooth' });

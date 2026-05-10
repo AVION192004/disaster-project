@@ -7,6 +7,8 @@ import jwt
 from datetime import datetime, timedelta
 import os
 import requests
+import threading
+import time
 
 import random
 import math
@@ -35,7 +37,7 @@ except Exception as e:
     print(f"Warning: Could not load DamageAssessor model: {e}")
     damage_assessor = None
 
-load_dotenv()
+load_dotenv(os.path.join(BASE_DIR, '.env'))
 GROQ_API_KEY = os.getenv("GROQ_API_KEY")
 TELEGRAM_TOKEN = os.getenv("TELEGRAM_BOT_TOKEN")
 TELEGRAM_CHAT_ID = os.getenv("TELEGRAM_CHAT_ID")
@@ -78,8 +80,17 @@ def init_db():
         affected_people INTEGER DEFAULT 0,
         images TEXT,
         status TEXT DEFAULT 'Pending',
+        latitude REAL,
+        longitude REAL,
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
     )""")
+
+    # Retrofit existing table if needed
+    try:
+        c.execute("ALTER TABLE disaster_reports ADD COLUMN latitude REAL")
+        c.execute("ALTER TABLE disaster_reports ADD COLUMN longitude REAL")
+    except sqlite3.OperationalError:
+        pass # Columns already exist
 
     c.execute("""CREATE TABLE IF NOT EXISTS chatbot_logs (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -262,39 +273,101 @@ def nearest_shelter():
     })
 
 
-@app.route("/telegram/webhook", methods=["POST"])
-def telegram_webhook():
-    data = request.json
-    if "message" in data:
-        chat_id = data["message"].get("chat", {}).get("id")
-        text = data["message"].get("text", "")
-        if text == "/start":
-            conn = sqlite3.connect(DB_PATH)
-            c = conn.cursor()
-            c.execute("INSERT OR IGNORE INTO telegram_users (chat_id) VALUES (?)", (chat_id,))
-            conn.commit()
-            conn.close()
-            requests.post(
-                f"https://api.telegram.org/bot{TELEGRAM_TOKEN}/sendMessage",
-                json={"chat_id": chat_id, "text": "✅ You will now receive disaster alerts from RescueVision."}
-            )
-    return jsonify({"status": "ok"})
+# --- Telegram Polling Logic (Background Thread) ---
+def telegram_polling_thread():
+    if not TELEGRAM_TOKEN or TELEGRAM_TOKEN == "your_telegram_bot_token":
+        print("INFO: Telegram polling NOT started (no valid token)")
+        return
+
+    print("OK: Telegram polling thread started")
+    last_update_id = 0
+    url = f"https://api.telegram.org/bot{TELEGRAM_TOKEN}"
+
+    while True:
+        try:
+            resp = requests.get(f"{url}/getUpdates", params={"offset": last_update_id + 1, "timeout": 30}, timeout=35)
+            if resp.status_code == 200:
+                updates = resp.json().get("result", [])
+                for update in updates:
+                    last_update_id = update["update_id"]
+                    if "message" in update:
+                        chat_id = update["message"]["chat"]["id"]
+                        text = update["message"].get("text", "")
+                        
+                        if text == "/start":
+                            try:
+                                conn = sqlite3.connect(DB_PATH)
+                                c = conn.cursor()
+                                c.execute("INSERT OR IGNORE INTO telegram_users (chat_id) VALUES (?)", (chat_id,))
+                                conn.commit()
+                                conn.close()
+                                requests.post(f"{url}/sendMessage", json={
+                                    "chat_id": chat_id, 
+                                    "text": "✅ Registration successful! You will now receive real-time disaster alerts from RescueVision."
+                                })
+                            except Exception as e:
+                                print(f"ERROR: Telegram registration failed for {chat_id}: {e}")
+                        elif text == "/id":
+                             requests.post(f"{url}/sendMessage", json={
+                                    "chat_id": chat_id, 
+                                    "text": f"Your Chat ID is: {chat_id}"
+                                })
+
+            time.sleep(1)
+        except Exception as e:
+            print(f"WARNING: Telegram polling error: {e}")
+            time.sleep(10)
+
+# Start telegram polling in background
+if TELEGRAM_TOKEN and TELEGRAM_TOKEN != "your_telegram_bot_token":
+    threading.Thread(target=telegram_polling_thread, daemon=True).start()
+else:
+    print("WARNING: Telegram bot not starting: Set TELEGRAM_BOT_TOKEN in .env")
 
 
 def send_telegram_alert(message):
     try:
-        if not TELEGRAM_TOKEN or not TELEGRAM_CHAT_ID:
-            print("⚠️ Telegram bot not configured")
+        if not TELEGRAM_TOKEN:
+            print("WARNING: Telegram bot token not configured")
             return
+
+        chat_ids = set()
+        if TELEGRAM_CHAT_ID and TELEGRAM_CHAT_ID != "your_telegram_chat_id":
+            chat_ids.add(TELEGRAM_CHAT_ID)
+
+        try:
+            conn = sqlite3.connect(DB_PATH)
+            c = conn.cursor()
+            c.execute("SELECT chat_id FROM telegram_users")
+            rows = c.fetchall()
+            for row in rows:
+                if row[0]:
+                    chat_ids.add(row[0])
+            conn.close()
+        except Exception as e:
+            print(f"WARNING: Could not fetch telegram users: {e}")
+
+        if not chat_ids:
+            print("INFO: No Telegram chat IDs to notify")
+            return
+
         url = f"https://api.telegram.org/bot{TELEGRAM_TOKEN}/sendMessage"
-        response = requests.post(
-            url,
-            json={"chat_id": TELEGRAM_CHAT_ID, "text": message, "parse_mode": "HTML"},
-            timeout=5
-        )
-        print("Telegram response:", response.json())
-    except requests.exceptions.RequestException as e:
-        print("Telegram request failed:", e)
+        for cid in chat_ids:
+            try:
+                response = requests.post(
+                    url,
+                    json={"chat_id": cid, "text": message, "parse_mode": "HTML"},
+                    timeout=5
+                )
+                if response.status_code == 200:
+                    print(f"OK: Telegram message sent to {cid}")
+                else:
+                    print(f"WARNING: Telegram returned {response.status_code} for {cid}")
+            except Exception as e:
+                print(f"ERROR: Failed to send Telegram to {cid}")
+
+    except Exception as e:
+        print("ERROR: Telegram alert system failure:", e)
 
 
 @app.route('/api/disaster/notify', methods=['POST'])
@@ -309,15 +382,18 @@ def notify_disaster():
         severity_map = {'low': 'Low', 'medium': 'Medium', 'high': 'High', 'critical': 'Critical'}
         severity = severity_map.get(severity_raw.lower(), 'Medium')
 
+        latitude      = data.get('latitude')
+        longitude     = data.get('longitude')
+
         if not disaster_type or not location_name:
             return jsonify({'success': False, 'error': 'disaster_type and location_name required'}), 400
 
         conn = sqlite3.connect(DB_PATH)
         c = conn.cursor()
         c.execute(
-            '''INSERT INTO disaster_reports (name, location, description, severity, reporter_name, status)
-               VALUES (?, ?, ?, ?, ?, ?)''',
-            (disaster_type, location_name, description, severity, 'Admin', 'Pending')
+            '''INSERT INTO disaster_reports (name, location, description, severity, reporter_name, status, latitude, longitude)
+               VALUES (?, ?, ?, ?, ?, ?, ?, ?)''',
+            (disaster_type, location_name, description, severity, 'Admin', 'Pending', latitude, longitude)
         )
         report_id = c.lastrowid
         conn.commit()
@@ -326,6 +402,7 @@ def notify_disaster():
         socketio.emit('new_disaster_report', {
             'id': report_id, 'name': disaster_type, 'location': location_name,
             'severity': severity, 'reporter_name': 'Admin',
+            'latitude': latitude, 'longitude': longitude,
             'timestamp': datetime.now().isoformat()
         })
 
@@ -383,6 +460,19 @@ def report_disaster():
         if not name or not location:
             return jsonify({'success': False, 'error': 'Name and location required'}), 400
 
+        latitude       = get_field('latitude')
+        longitude      = get_field('longitude')
+
+        # Fallback: if location string looks like "lat, lon", parse it
+        if not latitude or not longitude:
+            try:
+                parts = location.split(',')
+                if len(parts) == 2:
+                    latitude = float(parts[0].strip())
+                    longitude = float(parts[1].strip())
+            except:
+                pass
+
         uploaded_images = []
         if 'images' in request.files:
             files = request.files.getlist('images')
@@ -399,9 +489,9 @@ def report_disaster():
         conn = sqlite3.connect(DB_PATH)
         c = conn.cursor()
         c.execute('''INSERT INTO disaster_reports 
-                    (name, location, description, severity, reporter_name, reporter_phone, reporter_email, casualties, affected_people, images) 
-                    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)''',
-                  (name, location, description, severity, reporter_name, reporter_phone, reporter_email, casualties, affected_people, images_str))
+                    (name, location, description, severity, reporter_name, reporter_phone, reporter_email, casualties, affected_people, images, latitude, longitude) 
+                    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)''',
+                  (name, location, description, severity, reporter_name, reporter_phone, reporter_email, casualties, affected_people, images_str, latitude, longitude))
         report_id = c.lastrowid
         conn.commit()
         conn.close()
@@ -418,16 +508,17 @@ def report_disaster():
             'id': report_id, 'name': name, 'location': location,
             'severity': severity, 'reporter_name': reporter_name,
             'casualties': casualties, 'affected_people': affected_people,
+            'latitude': latitude, 'longitude': longitude,
             'timestamp': datetime.now().isoformat()
         })
 
-        print(f"✅ Report #{report_id} created successfully")
+        print(f"OK: Report #{report_id} created successfully")
         return jsonify({'success': True, 'message': 'Report submitted', 'report_id': report_id}), 201
 
     except Exception as e:
         import traceback
         traceback.print_exc()
-        print(f"❌ Report submission error: {str(e)}")
+        print(f"ERROR: Report submission error: {str(e)}")
         return jsonify({'success': False, 'error': f'Server error: {str(e)}'}), 500
 
 
@@ -482,10 +573,10 @@ def get_stats():
         type_rows = c.fetchall()
         disaster_types = [{"type": row[0], "count": row[1]} for row in type_rows]
 
-        c.execute("SELECT id, name, location, severity, status, created_at FROM disaster_reports ORDER BY created_at DESC LIMIT 10")
+        c.execute("SELECT id, name, location, severity, status, created_at, latitude, longitude FROM disaster_reports ORDER BY created_at DESC LIMIT 10")
         recent_rows = c.fetchall()
         recent_reports = [
-            {"id": r[0], "name": r[1], "location": r[2], "severity": r[3], "status": r[4], "created_at": r[5]}
+            {"id": r[0], "name": r[1], "location": r[2], "severity": r[3], "status": r[4], "created_at": r[5], "latitude": r[6], "longitude": r[7]}
             for r in recent_rows
         ]
 
@@ -511,7 +602,7 @@ def get_stats():
 def get_reports():
     conn = sqlite3.connect(DB_PATH)
     c = conn.cursor()
-    c.execute('SELECT * FROM disaster_reports ORDER BY created_at DESC')
+    c.execute('SELECT id, name, location, description, severity, reporter_name, reporter_phone, reporter_email, casualties, affected_people, images, status, created_at, latitude, longitude FROM disaster_reports ORDER BY created_at DESC')
     rows = c.fetchall()
     conn.close()
 
@@ -519,7 +610,7 @@ def get_reports():
         {'id': r[0], 'name': r[1], 'location': r[2], 'description': r[3],
          'severity': r[4], 'reporter_name': r[5], 'reporter_phone': r[6],
          'reporter_email': r[7], 'casualties': r[8], 'affected_people': r[9],
-         'images': r[10], 'status': r[11], 'created_at': r[12]} for r in rows
+         'images': r[10], 'status': r[11], 'created_at': r[12], 'latitude': r[13], 'longitude': r[14]} for r in rows
     ]})
 
 
@@ -590,7 +681,7 @@ def log_conversation(user_msg, bot_msg, location):
         conn.commit()
         conn.close()
     except Exception as e:
-        print(f"⚠️ Logging error: {e}")
+        print(f"WARNING: Logging error: {e}")
 
 
 @app.route('/api/damage/assess', methods=['POST'])
@@ -705,6 +796,13 @@ def allocate_resources():
         "allocation_results": allocation_results,
         "updated_resources":  _resources
     })
+
+
+@socketio.on('broadcast_alert')
+def handle_broadcast_alert(data):
+    """Relay broadcast alerts to all connected clients."""
+    print(f"INFO: Broadcast alert from {data.get('officer', 'Anonymous')}: {data.get('message')}")
+    socketio.emit('broadcast_alert', data)
 
 
 if __name__ == '__main__':

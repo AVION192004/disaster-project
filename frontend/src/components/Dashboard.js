@@ -11,6 +11,7 @@ import ResourceAllocation from "./ResourceAllocation";
 import ReportDisaster from "./ReportDisaster";
 import Overview from "./Overview";
 import ReportsManagement from "./ReportsManagement";
+import NotificationBell from "./NotificationBell";
 import "./Dashboard.css";
 
 // 3D Animated background for Operational Intelligence
@@ -42,6 +43,7 @@ function Dashboard() {
   const [activeSection, setActiveSection] = useState("overview");
   const [pendingCount, setPendingCount] = useState(0);
   const [officerName, setOfficerName] = useState("OF");
+  const [focusLocation, setFocusLocation] = useState(null);
 
   useEffect(() => {
     try {
@@ -74,9 +76,16 @@ function Dashboard() {
     return () => clearInterval(interval);
   }, []);
 
+  const handleNotificationClick = (notif) => {
+    if (notif.latitude && notif.longitude) {
+      setFocusLocation({ latitude: notif.latitude, longitude: notif.longitude });
+      setActiveSection("overview");
+    }
+  };
+
   const renderContent = () => {
     switch (activeSection) {
-      case "overview": return <Overview onNavigate={setActiveSection} />;
+      case "overview": return <Overview onNavigate={setActiveSection} focusLocation={focusLocation} />;
       case "damage": return <DamageAssessment />;
       case "resources": return <ResourceAllocation />;
       case "reports": return <ReportsManagement />;
@@ -163,14 +172,7 @@ function Dashboard() {
           </motion.div>
 
           <div className="db3d__actions">
-            <motion.div 
-              className="db3d__alert"
-              whileHover={{ scale: 1.05 }}
-              onClick={() => setActiveSection("reports")}
-            >
-              <Bell size={20} />
-              {pendingCount > 0 && <div className="db3d__alert-dot"></div>}
-            </motion.div>
+            <NotificationBell onNotificationClick={handleNotificationClick} />
 
             <div className="db3d__avatar">
               {officerName}
