@@ -20,6 +20,7 @@ import ReliefBotFloating from "./components/ReliefBotFloating";
 import ThemeToggle from "./components/ThemeToggle";
 import Home3D from "./components/Home3D";
 import ReportDisaster3D from "./components/ReportDisaster3D";
+import OfflineSync from "./components/OfflineSync";
 
 const darkPage = {
   backgroundColor: "#0D1117",
@@ -29,30 +30,12 @@ const darkPage = {
 
 function App() {
 
-  // ✅ Offline / Online detection
-  useEffect(() => {
-    const handleOffline = () => {
-      alert("⚠️ You are offline. Emergency reports will be saved locally.");
-    };
-
-    const handleOnline = () => {
-      alert("✅ Internet restored. Syncing reports.");
-    };
-
-    window.addEventListener("offline", handleOffline);
-    window.addEventListener("online", handleOnline);
-
-    return () => {
-      window.removeEventListener("offline", handleOffline);
-      window.removeEventListener("online", handleOnline);
-    };
-  }, []);
-
   return (
     <Router>
       <NotificationProvider>
         <div className="App" style={{ backgroundColor: "#0D1117", minHeight: "100vh" }}>
           <Header />
+          <OfflineSync />
 
           <Routes>
             {/* Home Page */}

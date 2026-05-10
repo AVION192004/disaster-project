@@ -139,9 +139,7 @@ export default function ReportDisaster() {
     try {
       const response = await fetch('http://localhost:5000/api/disaster/report', {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           name: formData.disasterType,
           location: formData.location,
@@ -150,7 +148,6 @@ export default function ReportDisaster() {
           reporter_name: formData.reporterName,
           reporter_phone: formData.reporterPhone,
           reporter_email: formData.reporterEmail,
-          // Sending combined casualties since backend expects single field
           casualties: parseInt(formData.injured || 0) + parseInt(formData.deceased || 0) + parseInt(formData.missing || 0),
           affected_people: parseInt(formData.displaced || 0),
           latitude: formData.latitude,
@@ -161,16 +158,41 @@ export default function ReportDisaster() {
       const data = await response.json();
 
       if (data.success) {
-        setReportId(data.report_id || 'PENDING');
+        setReportId(data.report_id || 'SYNCED');
         setSubmitted(true);
       } else {
         setError(data.error || 'Failed to submit report');
         window.scrollTo({ top: 0, behavior: 'smooth' });
       }
     } catch (err) {
-      setError('❌ Network error. Please ensure backend is running continuously on http://localhost:5000');
-      setBackendStatus('offline');
-      window.scrollTo({ top: 0, behavior: 'smooth' });
+      // OFFLINE HANDLING
+      console.warn('Network unreachable, saving to offline queue...', err);
+      
+      const offlineReport = {
+        id: `OFF-${Date.now()}`,
+        data: {
+          name: formData.disasterType,
+          location: formData.location,
+          description: formData.description,
+          severity: formData.severity,
+          reporter_name: formData.reporterName,
+          reporter_phone: formData.reporterPhone,
+          reporter_email: formData.reporterEmail,
+          casualties: parseInt(formData.injured || 0) + parseInt(formData.deceased || 0) + parseInt(formData.missing || 0),
+          affected_people: parseInt(formData.displaced || 0),
+          latitude: formData.latitude,
+          longitude: formData.longitude
+        },
+        timestamp: new Date().toISOString()
+      };
+
+      const queue = JSON.parse(localStorage.getItem('offline_disaster_reports') || '[]');
+      queue.push(offlineReport);
+      localStorage.setItem('offline_disaster_reports', JSON.stringify(queue));
+
+      setReportId(`LOCAL-${offlineReport.id}`);
+      setSubmitted(true);
+      setError('⚠️ Network offline. Report saved locally and will sync when connection returns.');
     } finally {
       setIsSubmitting(false);
     }
